@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>運用方針 — Paper Trade</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#121212; color:#E0E0E0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; padding:16px; max-width:960px; margin:0 auto; }
+a.back { color:#64B5F6; text-decoration:none; font-size:0.85rem; display:inline-block; margin-bottom:12px; }
+a.back:hover { text-decoration:underline; }
+h1 { font-size:1.3rem; margin-bottom:4px; }
+.updated { font-size:0.75rem; color:#757575; margin-bottom:20px; }
+.section { margin-bottom:24px; }
+.section h2 { font-size:1rem; margin-bottom:10px; padding-bottom:4px; border-bottom:1px solid #333; }
+table { width:100%; border-collapse:collapse; font-size:0.85rem; margin-bottom:16px; }
+th { background:#1E1E1E; color:#9E9E9E; text-align:left; padding:8px 10px; font-weight:500; font-size:0.75rem; text-transform:uppercase; }
+td { padding:8px 10px; border-bottom:1px solid #2A2A2A; }
+td.num { text-align:right; font-variant-numeric:tabular-nums; }
+.entry-list { list-style:none; padding:0; }
+.entry-list li { padding:8px 10px; border-bottom:1px solid #2A2A2A; font-size:0.85rem; display:flex; justify-content:space-between; }
+.entry-list li .label { color:#9E9E9E; }
+.entry-list li .val { font-weight:600; }
+.highlight { color:#64B5F6; }
+.score-desc { font-size:0.72rem; color:#757575; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:16px; }
+.card { background:#1E1E1E; border-radius:10px; padding:14px; text-align:center; }
+.card .label { font-size:0.7rem; color:#9E9E9E; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; }
+.card .value { font-size:1.3rem; font-weight:700; }
+.card .sub { font-size:0.7rem; color:#757575; margin-top:2px; }
+@media(max-width:480px) {
+  .cards { grid-template-columns:repeat(2,1fr); }
+  table { font-size:0.75rem; }
+  td, th { padding:6px 4px; }
+}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; Dashboard</a>
+<h1>運用方針</h1>
+<div class="updated">生成: 2026-04-09 13:24 JST</div>
+
+<div class="section">
+  <h2>エントリー条件</h2>
+  <ul class="entry-list">
+    <li><span class="label">SMA25 &gt; SMA100（ゴールデンクロス）</span><span class="val highlight">必須</span></li>
+    <li><span class="label">RSI 50〜65</span><span class="val highlight">必須</span></li>
+    <li><span class="label">終値 &gt; SMA200（上昇トレンド）</span><span class="val highlight">必須</span></li>
+    <li><span class="label">ADX &ge; 25（トレンド強度）</span><span class="val highlight">必須</span></li>
+    <li><span class="label">最小出来高</span><span class="val">500,000 株</span></li>
+  </ul>
+</div>
+
+<div class="section">
+  <h2>イグジットルール</h2>
+  <table>
+    <thead><tr><th>ルール</th><th>条件</th></tr></thead>
+    <tbody>
+      <tr><td>トレーリングストップ</td><td class="num">-8%</td></tr>
+      <tr><td>建値移動</td><td class="num">+6% で発動</td></tr>
+      <tr><td>半分利確</td><td class="num">+8%（50%売却）</td></tr>
+      <tr><td>全利確</td><td class="num">+15%</td></tr>
+      <tr><td>CoCh（トレンド崩壊）</td><td class="num">直近3本の安値切り下げ</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>ポジション管理</h2>
+  <div class="cards">
+    <div class="card"><div class="label">最大保有数</div><div class="value">10</div></div>
+    <div class="card"><div class="label">1日最大エントリー</div><div class="value">3</div></div>
+    <div class="card"><div class="label">1トレードリスク</div><div class="value">2%</div></div>
+    <div class="card"><div class="label">最大配分</div><div class="value">10%</div></div>
+    <div class="card"><div class="label">セクター上限</div><div class="value">30%</div></div>
+    <div class="card"><div class="label">損切り後CD</div><div class="value">7日</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>複合スコア配分</h2>
+  <table>
+    <thead><tr><th>要素</th><th>ウェイト</th></tr></thead>
+    <tbody>
+<tr><td>volume_surge<br><span class="score-desc">直近出来高 / 20日平均（上限3.0で正規化）</span></td><td class="num">20%</td></tr>
+<tr><td>rsi_sweet_spot<br><span class="score-desc">RSI 55からの距離（近いほど高スコア）</span></td><td class="num">10%</td></tr>
+<tr><td>sma_momentum<br><span class="score-desc">SMA乖離率 + SMA25傾きのブレンド</span></td><td class="num">25%</td></tr>
+<tr><td>price_vs_sma200<br><span class="score-desc">SMA200乖離率（0〜5%が最高、15%超で0）</span></td><td class="num">10%</td></tr>
+<tr><td>tv_recommendation<br><span class="score-desc">TradingView テクニカル推奨スコア</span></td><td class="num">15%</td></tr>
+<tr><td>ichimoku_bullish<br><span class="score-desc">転換線 &gt; 基準線 かつ 終値 &gt; 雲上限で1.0</span></td><td class="num">10%</td></tr>
+<tr><td>trend_strength<br><span class="score-desc">ADX値を0〜50で正規化（0.0〜1.0）</span></td><td class="num">10%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>

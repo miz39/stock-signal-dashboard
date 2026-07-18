@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>実行履歴</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#121212; color:#E0E0E0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; padding:16px; max-width:960px; margin:0 auto; }
+a.back { color:#64B5F6; text-decoration:none; font-size:0.85rem; display:inline-block; margin-bottom:12px; }
+a.back:hover { text-decoration:underline; }
+h1 { font-size:1.3rem; margin-bottom:4px; }
+.updated { font-size:0.75rem; color:#757575; margin-bottom:16px; }
+.empty { text-align:center; color:#757575; padding:48px 16px; }
+
+details { margin-bottom:8px; }
+details > summary { cursor:pointer; list-style:none; }
+details > summary::-webkit-details-marker { display:none; }
+details > summary::before { content:'\25B6'; display:inline-block; margin-right:8px; font-size:0.7rem; transition:transform 0.2s; }
+details[open] > summary::before { transform:rotate(90deg); }
+
+.date-group > summary {
+  background:#1E1E1E; border-radius:8px; padding:12px 16px; font-size:0.9rem; font-weight:600;
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+.date-group > .content { padding:8px 0 8px 16px; }
+
+.session-group { margin-bottom:6px; }
+.session-group > summary {
+  background:#262626; border-radius:6px; padding:10px 14px; font-size:0.82rem; font-weight:500;
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+.session-group > .content { padding:10px 0 10px 4px; }
+
+.badge { font-size:0.7rem; padding:2px 8px; border-radius:10px; font-weight:500; }
+.badge-action { background:#0D47A1; color:#90CAF9; }
+.badge-none { background:#333; color:#757575; }
+.badge-scan { background:#263238; color:#90A4AE; font-size:0.65rem; }
+
+/* Action block: one block per action type */
+.act { background:#1E1E1E; border-radius:8px; padding:12px 16px; margin-bottom:8px; border-left:3px solid #757575; }
+.act-buy { border-left-color:#00C853; }
+.act-sell { border-left-color:#FF1744; }
+.act-partial { border-left-color:#FF9800; }
+.act-stop { border-left-color:#64B5F6; }
+
+.act-title { font-size:0.78rem; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+.act-title .tag { font-size:0.65rem; padding:1px 6px; border-radius:3px; }
+.tag-buy { background:#1B5E20; color:#A5D6A7; }
+.tag-sell { background:#B71C1C; color:#EF9A9A; }
+.tag-partial { background:#E65100; color:#FFB74D; }
+.tag-stop { background:#0D47A1; color:#90CAF9; }
+
+.act-body { font-size:0.82rem; color:#B0BEC5; line-height:1.7; }
+.act-body b { color:#E0E0E0; font-weight:600; }
+.act-reason { font-size:0.75rem; color:#757575; margin-top:4px; }
+.green { color:#00C853; } .red { color:#FF1744; }
+
+.no-action { background:#1E1E1E; border-radius:8px; padding:14px; color:#757575; font-size:0.82rem; text-align:center; }
+.snapshot { margin-top:4px; padding:8px 16px; background:#1A1A1A; border-radius:6px; font-size:0.75rem; color:#757575; }
+.snapshot b { color:#B0BEC5; font-weight:500; }
+
+@media(max-width:480px) { .act-body { font-size:0.78rem; } }
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; Dashboard</a>
+<h1>実行履歴</h1>
+<div class="updated">最終更新: 2026-04-04 00:45 JST</div>
+<div id="root"></div>
+<script>
+const H = [{"timestamp": "2026-03-26T15:11:15.339375+09:00", "date": "2026-03-26", "session": "15:10 引け後", "profile": "conservative", "mode": "paper", "scan": {"total": 225, "buy_count": 55, "sell_count": 0, "error_count": 0}, "buy_signals": [{"ticker": "4005.T", "name": "住友化学", "price": 503.3999938964844, "rsi": 50.0, "reason": "ゴールデンクロス（SMA25 > SMA75）+ RSI適正（50.0）+ 上昇トレンド", "stop_loss": 443.0, "shares": 30}, {"ticker": "6976.T", "name": "太陽誘電", "price": 4142.0, "rsi": 50.1, "reason": "ゴールデンクロス（SMA25 > SMA75）+ RSI適正（50.1）+ 上昇トレンド", "stop_loss": 3645.0, "shares": 3}, {"ticker": "5214.T", "name": "日本電気硝子", "price": 6365.0, "rsi": 50.1, "reason": "ゴールデンクロス（SMA25 > SMA75）+ RSI適正（50.1）+ 上昇トレンド", "stop_loss": 5601.2, "shares": 2}, {"ticker": "4911.T", "name": "資生堂", "price": 3005.0, "rsi": 50.2, "reason": "ゴールデンクロス（SMA25 > SMA75）+ RSI適正（50.2）+ 上昇トレンド", "stop_loss": 2644.4, "shares": 5}, {"ticker": "8308.T", "name": "りそなホールディングス", "price": 1808.5, "rsi": 50.3, "reason": "ゴールデンクロス（SMA25 > SMA75）+ RSI適正（50.3）+ 上昇トレンド", "stop_loss": 1591.5, "shares": 8}, {"ticker": "5711.T", "name": "三菱マテリアル", "price": 5111.0, "rsi": 50.4, "reason": "ゴールデンクロス（SMA25 > SMA75）+ RSI適正（50.4）+ 上昇トレンド", "stop_loss": 4497.7, "shares": 3}, {"ticker": "2768.T", "name": "双日", "price": 6305.0, "rsi": 50.4, "reason": "ゴールデンクロス（SMA25 > SMA75）+ RSI適正（50.4）+ 上昇トレンド", "stop_loss": 5548.4, "shares": 2}, {"ticker": "8697.T", "name": "日本取引所グループ", "price": 1893.5, "rsi": 50.7, "reason": "ゴールデンクロス（SMA25 > SMA75）+ RSI適正（50.7）+ 上昇トレンド", "stop_loss": 1666.3, "shares": 8}, {"ticker": "3401.T", "name": "帝人", "price": 1594.5, "rsi": 50.7, "reason": "ゴールデンクロス（SMA25 > SMA75）+ RSI適正（50.7）+ 上昇トレンド", "stop_loss": 1403.2, "shares": 9}, {"ticker": "2269.T", "name": "明治ホールディングス", "price": 3903.0, "rsi": 50.8, "reason": "ゴールデンクロス（SMA25 > SMA75）+ RSI適正（50.8）+ 上昇トレンド", "stop_loss": 3434.6, "shares": 3}], "sell_signals": [], "executions": {"entries": [{"ticker": "5711.T", "name": "三菱マテリアル", "price": 5111.0, "shares": 3, "stop_loss": 4497.7, "rsi": 50.4, "reason": "ゴールデンクロス（SMA25 > SMA75）+ RSI適正（50.4）+ 上昇トレンド"}, {"ticker": "2768.T", "name": "双日", "price": 6305.0, "shares": 2, "stop_loss": 5548.4, "rsi": 50.4, "reason": "ゴールデンクロス（SMA25 > SMA75）+ RSI適正（50.4）+ 上昇トレンド"}, {"ticker": "8697.T", "name": "日本取引所グループ", "price": 1893.5, "shares": 8, "stop_loss": 1666.3, "rsi": 50.7, "reason": "ゴールデンクロス（SMA25 > SMA75）+ RSI適正（50.7）+ 上昇トレンド"}], "exits": [], "partial_exits": [], "trailing_stop_updates": []}, "portfolio_snapshot": {"open_count": 9, "stock_value": 189020.0, "cash": 110806.0, "total_assets": 299826.0}}];
+const $ = s => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+const Y = v => v != null ? '&yen;' + Number(v).toLocaleString() : '-';
+const P = v => v > 0 ? '<span class="green">+' + v.toFixed(1) + '%</span>' : '<span class="red">' + v.toFixed(1) + '%</span>';
+const PNL = v => v > 0 ? '<span class="green">+' + Y(v) + '</span>' : v < 0 ? '<span class="red">' + Y(v) + '</span>' : Y(0);
+
+if (!H.length) {
+  document.getElementById('root').innerHTML = '<div class="empty">データなし</div>';
+} else {
+  const byDate = {};
+  H.forEach(h => { (byDate[h.date] = byDate[h.date] || []).push(h); });
+  const dates = Object.keys(byDate).sort().reverse();
+  let o = '';
+
+  dates.forEach((date, di) => {
+    const ss = byDate[date];
+    let da = 0;
+    ss.forEach(h => {
+      const x = h.executions || {};
+      da += (x.entries?.length||0)+(x.exits?.length||0)+(x.partial_exits?.length||0)+(x.trailing_stop_updates?.length||0);
+    });
+    const latest = di === 0;
+    o += '<details class="date-group"' + (latest?' open':'') + '><summary>' + $(date);
+    o += da ? ' <span class="badge badge-action">' + da + '件</span>' : ' <span class="badge badge-none">変更なし</span>';
+    o += '</summary><div class="content">';
+
+    ss.forEach(h => {
+      const scan = h.scan || {};
+      const x = h.executions || {};
+      const entries = x.entries || [], exits = x.exits || [], partials = x.partial_exits || [], stops = x.trailing_stop_updates || [];
+      const ac = entries.length + exits.length + partials.length + stops.length;
+
+      o += '<details class="session-group"' + (latest?' open':'') + '><summary>' + $(h.session);
+      o += ac ? ' <span class="badge badge-action">' + ac + '件</span>' : ' <span class="badge badge-none">変更なし</span>';
+      o += ' <span class="badge badge-scan">scan ' + (scan.total||0) + ' / buy ' + (scan.buy_count||0) + ' / sell ' + (scan.sell_count||0) + '</span>';
+      o += '</summary><div class="content">';
+
+      if (!ac) {
+        o += '<div class="no-action">売買・ストップ更新なし</div>';
+      }
+
+      // Exits block
+      if (exits.length) {
+        o += '<div class="act act-sell"><div class="act-title"><span class="tag tag-sell">売却</span> ' + exits.length + '件</div><div class="act-body">';
+        exits.forEach((e,i) => {
+          if (i) o += '<br>';
+          o += '<b>' + $(e.name) + '</b> ';
+          if (e.entry_price) o += Y(e.entry_price) + '&rarr;';
+          o += Y(e.price);
+          if (e.shares) o += ' &times;' + e.shares + '株';
+          o += ' &nbsp;損益 ' + PNL(e.pnl);
+          if (e.pnl_pct != null) o += '（' + P(e.pnl_pct) + '）';
+        });
+        // Common reason
+        const reasons = [...new Set(exits.map(e => e.reason).filter(Boolean))];
+        if (reasons.length) o += '<div class="act-reason">' + reasons.map($).join(' / ') + '</div>';
+        o += '</div></div>';
+      }
+
+      // Partial exits block
+      if (partials.length) {
+        o += '<div class="act act-partial"><div class="act-title"><span class="tag tag-partial">利確</span> ' + partials.length + '件</div><div class="act-body">';
+        partials.forEach((p,i) => {
+          if (i) o += '<br>';
+          o += '<b>' + $(p.name) + '</b> ' + (p.shares||0) + '株/' + (p.total_shares||'?') + '株を' + Y(p.price) + 'で売却';
+          o += ' &nbsp;損益 ' + PNL(p.pnl);
+        });
+        const gmin = Math.min(...partials.map(p => p.gain_pct||0));
+        const gmax = Math.max(...partials.map(p => p.gain_pct||0));
+        const gpct = gmin === gmax ? '+' + gmin.toFixed(1) + '%' : '+' + gmin.toFixed(1) + '〜' + gmax.toFixed(1) + '%';
+        o += '<div class="act-reason">含み益 ' + gpct + ' で利確ルール適用（+7%到達で半分売却）</div>';
+        o += '</div></div>';
+      }
+
+      // Stop updates block
+      if (stops.length) {
+        o += '<div class="act act-stop"><div class="act-title"><span class="tag tag-stop">ストップ引き締め</span> ' + stops.length + '件</div><div class="act-body">';
+        o += stops.map(s => '<b>' + $(s.name) + '</b>(' + P(s.gain_pct||0) + ') &rarr;' + Y(s.new_stop)).join(' / ');
+        const smin = Math.min(...stops.map(s => s.gain_pct||0));
+        const smax = Math.max(...stops.map(s => s.gain_pct||0));
+        const spct = smin === smax ? '+' + smin.toFixed(1) + '%' : '+' + smin.toFixed(1) + '〜' + smax.toFixed(1) + '%';
+        o += '<div class="act-reason">含み益 ' + spct + ' のためトレーリングストップを-4%に引き締め</div>';
+        o += '</div></div>';
+      }
+
+      // Entries block
+      if (entries.length) {
+        o += '<div class="act act-buy"><div class="act-title"><span class="tag tag-buy">購入</span> ' + entries.length + '件</div><div class="act-body">';
+        entries.forEach((e,i) => {
+          if (i) o += '<br>';
+          o += '<b>' + $(e.name) + '</b> ' + Y(e.price) + '&times;' + (e.shares||0) + '株';
+          o += '（RSI ' + (e.rsi != null ? e.rsi.toFixed(1) : '-') + '）';
+          o += ' ストップ ' + Y(e.stop_loss);
+        });
+        const reasons = [...new Set(entries.map(e => e.reason).filter(Boolean))];
+        if (reasons.length) o += '<div class="act-reason">' + reasons.map($).join(' / ') + '</div>';
+        o += '</div></div>';
+      }
+
+      // Snapshot
+      if (h.portfolio_snapshot) {
+        const ps = h.portfolio_snapshot;
+        const sv = ps.stock_value != null ? ps.stock_value : ps.total_value;
+        o += '<div class="snapshot">';
+        o += '保有 <b>' + (ps.open_count||0) + '銘柄</b>';
+        o += ' / 株時価 <b>' + Y(sv) + '</b>';
+        if (ps.cash != null) o += ' / 現金 <b>' + Y(ps.cash) + '</b>';
+        if (ps.total_assets != null) o += ' / 総資産 <b>' + Y(ps.total_assets) + '</b>';
+        o += '</div>';
+      }
+
+      o += '</div></details>';
+    });
+    o += '</div></details>';
+  });
+  document.getElementById('root').innerHTML = o;
+}
+</script>
+</body>
+</html>

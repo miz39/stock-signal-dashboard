@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>戦略分析ダッシュボード</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#121212; color:#E0E0E0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; padding:16px; max-width:960px; margin:0 auto; }
+a.back { color:#64B5F6; text-decoration:none; font-size:0.85rem; display:inline-block; margin-bottom:12px; }
+a.back:hover { text-decoration:underline; }
+h1 { font-size:1.3rem; margin-bottom:4px; }
+.updated { font-size:0.75rem; color:#757575; margin-bottom:20px; }
+.section { margin-bottom:28px; }
+.section h2 { font-size:1rem; margin-bottom:10px; padding-bottom:4px; border-bottom:1px solid #333; }
+.chart-wrap { background:#1E1E1E; border-radius:10px; padding:12px; margin-bottom:16px; }
+
+/* Profile cards */
+.profile-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:16px; }
+.profile-card { background:#1E1E1E; border-radius:10px; padding:16px; }
+.profile-name { font-size:0.85rem; font-weight:700; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px; }
+.profile-stats { display:flex; flex-direction:column; gap:6px; }
+.pstat { display:flex; justify-content:space-between; font-size:0.8rem; }
+.pstat-label { color:#9E9E9E; }
+.pstat-value { font-weight:600; }
+
+/* Parameter table */
+table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+th { background:#1E1E1E; color:#9E9E9E; text-align:left; padding:8px 6px; font-weight:500; font-size:0.7rem; text-transform:uppercase; }
+td { padding:8px 6px; border-bottom:1px solid #2A2A2A; }
+td.num { text-align:right; font-variant-numeric:tabular-nums; }
+
+/* Heatmap */
+.hm-table { width:100%; border-collapse:collapse; font-size:0.75rem; }
+.hm-table th { background:#1E1E1E; color:#9E9E9E; padding:6px 4px; font-size:0.65rem; text-align:center; }
+.hm-cell { text-align:center; padding:8px 4px; font-weight:600; font-size:0.8rem; border:1px solid #2A2A2A; }
+.hm-row-label { color:#9E9E9E; font-size:0.72rem; padding:6px 8px; white-space:nowrap; }
+.hm-count { font-size:0.6rem; font-weight:400; color:#757575; }
+
+/* Data note */
+.data-note { background:#1A2332; border:1px solid #1565C0; border-radius:8px; padding:14px; font-size:0.82rem; color:#90CAF9; }
+
+.green { color:#00C853; }
+.red { color:#FF1744; }
+
+@media(max-width:600px) {
+  .profile-grid { grid-template-columns:1fr; }
+  table { font-size:0.75rem; }
+  .hm-table { font-size:0.65rem; }
+  .hm-cell { padding:4px 2px; font-size:0.7rem; }
+}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; Dashboard</a>
+<h1>戦略分析ダッシュボード</h1>
+<div class="updated">最終更新: 2026-04-09 14:29 JST</div>
+
+<!-- Section 1: Profile Comparison -->
+<div class="section">
+  <h2>プロファイル比較</h2>
+  <div class="profile-grid"><div class="profile-card" style="border-top:3px solid #2196F3">
+  <div class="profile-name" style="color:#2196F3">Default</div>
+  <div class="profile-stats">
+    <div class="pstat"><span class="pstat-label">勝率</span><span class="pstat-value">54.5%</span></div>
+    <div class="pstat"><span class="pstat-label">損益</span><span class="pstat-value" style="color:#00C853">&yen;+9,762</span></div>
+    <div class="pstat"><span class="pstat-label">トレード</span><span class="pstat-value">33件</span></div>
+    <div class="pstat"><span class="pstat-label">PF</span><span class="pstat-value">1.67</span></div>
+    <div class="pstat"><span class="pstat-label">保有中</span><span class="pstat-value">10銘柄</span></div>
+  </div>
+</div><div class="profile-card" style="border-top:3px solid #FF9800">
+  <div class="profile-name" style="color:#FF9800">Conservative</div>
+  <div class="profile-stats">
+    <div class="pstat"><span class="pstat-label">勝率</span><span class="pstat-value">0%</span></div>
+    <div class="pstat"><span class="pstat-label">損益</span><span class="pstat-value" style="color:#9E9E9E">&yen;0</span></div>
+    <div class="pstat"><span class="pstat-label">トレード</span><span class="pstat-value">0件</span></div>
+    <div class="pstat"><span class="pstat-label">PF</span><span class="pstat-value">0</span></div>
+    <div class="pstat"><span class="pstat-label">保有中</span><span class="pstat-value">9銘柄</span></div>
+  </div>
+</div><div class="profile-card" style="border-top:3px solid #9C27B0">
+  <div class="profile-name" style="color:#9C27B0">Aggressive</div>
+  <div class="profile-stats">
+    <div class="pstat"><span class="pstat-label">勝率</span><span class="pstat-value">0%</span></div>
+    <div class="pstat"><span class="pstat-label">損益</span><span class="pstat-value" style="color:#9E9E9E">&yen;0</span></div>
+    <div class="pstat"><span class="pstat-label">トレード</span><span class="pstat-value">0件</span></div>
+    <div class="pstat"><span class="pstat-label">PF</span><span class="pstat-value">0</span></div>
+    <div class="pstat"><span class="pstat-label">保有中</span><span class="pstat-value">9銘柄</span></div>
+  </div>
+</div></div>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr><th>パラメータ</th><th style='color:#2196F3'>Default</th><th style='color:#FF9800'>Conservative</th><th style='color:#9C27B0'>Aggressive</th></tr></thead>
+    <tbody><tr><td>ストップロス</td><td class='num'>-8%</td><td class='num'>-12%</td><td class='num'>-5%</td></tr><tr><td>建値移動</td><td class='num'>+6%</td><td class='num'>+8%</td><td class='num'>+3%</td></tr><tr><td>半分利確</td><td class='num'>+8%</td><td class='num'>+10%</td><td class='num'>+6%</td></tr><tr><td>全部利確</td><td class='num'>+15%</td><td class='num'>+20%</td><td class='num'>+10%</td></tr></tbody>
+  </table>
+  </div>
+  <div class="chart-wrap" style="margin-top:16px">
+    <canvas id="equityCompareChart" height="250"></canvas>
+  </div>
+</div>
+
+<!-- Section 1.5: Expected Value Simulation -->
+<div class="section">
+  <h2>期待値シミュレーション</h2>
+  <div class="profile-grid">
+    <div class="profile-card" style="border-top:3px solid #FFD600">
+      <div class="profile-name" style="color:#FFD600">E[PnL/トレード]</div>
+      <div class="profile-stats">
+        <div class="pstat"><span class="pstat-label">期待値</span><span class="pstat-value" style="color:#00C853">&yen;+295</span></div>
+        <div class="pstat"><span class="pstat-label">月間推定</span><span class="pstat-value" style="color:#00C853">&yen;+9,728</span></div>
+        <div class="pstat"><span class="pstat-label">損益分岐勝率</span><span class="pstat-value">41.8%</span></div>
+        <div class="pstat"><span class="pstat-label">月間トレード数</span><span class="pstat-value">33.0回</span></div>
+      </div>
+    </div>
+    <div class="profile-card" style="border-top:3px solid #9E9E9E">
+      <div class="profile-name" style="color:#9E9E9E">算出根拠</div>
+      <div class="profile-stats">
+        <div class="pstat"><span class="pstat-label">現在勝率</span><span class="pstat-value">54.5%</span></div>
+        <div class="pstat"><span class="pstat-label">平均勝ち</span><span class="pstat-value" style="color:#00C853">&yen;1,352</span></div>
+        <div class="pstat"><span class="pstat-label">平均負け</span><span class="pstat-value" style="color:#FF1744">&yen;972</span></div>
+        <div class="pstat"><span class="pstat-label">計算式</span><span class="pstat-value" style="font-size:0.65rem">WR&times;AvgW - (1-WR)&times;AvgL</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-wrap" style="margin-top:16px">
+    <canvas id="evSensitivityChart" height="250"></canvas>
+  </div>
+
+  <div style="overflow-x:auto;margin-top:16px">
+    <h3 style="font-size:0.85rem;margin-bottom:8px;color:#9E9E9E">パラメータシナリオ比較</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>シナリオ</th><th>ストップ</th><th>半利確</th><th>全利確</th>
+          <th>推定勝率</th><th>平均勝</th><th>平均負</th><th>E[PnL]</th><th>月間</th><th>損益分岐</th>
+        </tr>
+      </thead>
+      <tbody><tr>
+<td><strong>現行</strong></td>
+<td class="num">-8%</td>
+<td class="num">+8%</td>
+<td class="num">+15%</td>
+<td class="num">54.5%</td>
+<td class="num">&yen;1,352</td>
+<td class="num">&yen;972</td>
+<td class="num" style="color:#00C853">&yen;+295</td>
+<td class="num" style="color:#00C853">&yen;+9,728</td>
+<td class="num">41.8%</td>
+</tr><tr>
+<td><strong>タイト</strong></td>
+<td class="num">-6%</td>
+<td class="num">+8%</td>
+<td class="num">+12%</td>
+<td class="num">40.9%</td>
+<td class="num">&yen;1,352</td>
+<td class="num">&yen;729</td>
+<td class="num" style="color:#00C853">&yen;+122</td>
+<td class="num" style="color:#00C853">&yen;+4,029</td>
+<td class="num">35.0%</td>
+</tr><tr>
+<td><strong>ワイド</strong></td>
+<td class="num">-10%</td>
+<td class="num">+10%</td>
+<td class="num">+15%</td>
+<td class="num">68.1%</td>
+<td class="num">&yen;1,690</td>
+<td class="num">&yen;1,214</td>
+<td class="num" style="color:#00C853">&yen;+764</td>
+<td class="num" style="color:#00C853">&yen;+25,199</td>
+<td class="num">41.8%</td>
+</tr></tbody>
+    </table>
+    <p style="font-size:0.68rem;color:#757575;margin-top:6px">※ タイト/ワイドの推定値はストップ幅に基づく線形スケーリング。実際のボラティリティ等で変動します。</p>
+  </div>
+</div>
+
+<!-- Section 2: N-day Signal Accuracy -->
+<div class="section">
+  <h2>シグナル精度（BUY後N日）</h2>
+  <div class="chart-wrap">
+    <canvas id="ndayChart" height="250"></canvas>
+  </div>
+</div>
+
+<!-- Section 3: RSI / SMA Effectiveness -->
+<div class="section">
+  <h2>RSI 有効性ヒートマップ</h2>
+  <p style="font-size:0.75rem;color:#757575;margin-bottom:8px">RSIレンジ × 保有期間の勝率（5件未満はグレーアウト）</p>
+  <div style="overflow-x:auto">
+  <table class="hm-table">
+    <thead><tr><th></th><th>RSI 50-52</th><th>RSI 52-54</th><th>RSI 54-56</th><th>RSI 56-58</th><th>RSI 58-60</th><th>RSI 60-62</th><th>RSI 62-65</th></tr></thead>
+    <tbody><tr><td class='hm-row-label'>1-5d</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>4件</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>1件</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td></tr><tr><td class='hm-row-label'>6-10d</td><td class='hm-cell' style='background:rgba(0,200,0,0.3);color:#00C853'>100%<br><span class='hm-count'>9件</span></td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td></tr><tr><td class='hm-row-label'>11-20d</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td></tr><tr><td class='hm-row-label'>21-30d</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td><td class='hm-cell' style='background:#2A2A2A;color:#757575'>-</td></tr></tbody>
+  </table>
+  </div>
+</div>
+
+<div class="section">
+  <h2>SMA 乖離率 vs 勝率</h2>
+  <div id="smaSection"></div>
+</div>
+
+<script>
+// Equity comparison chart
+const eqLabels = ["2026-03-04", "2026-03-05", "2026-03-06", "2026-03-07", "2026-03-08", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-14", "2026-03-15", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-21", "2026-03-22", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-28", "2026-03-29", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09"];
+const eqDatasets = [{
+      label: 'Default',
+      data: [300000, 300000, 300000, 300000, 300000, 293542.0, 293542.0, 293542.0, 294766.0, 293630.8, 293630.8, 293630.8, 292423.3, 292423.3, 292423.3, 292423.3, 292423.3, 292423.3, 292423.3, 289696.0, 288174.1, 288174.1, 294722.1, 294778.1, 294778.1, 294778.1, 294778.1, 297920.3, 298942.8, 300042.8, 301112.9, 301112.9, 301112.9, 301112.9, 301112.9, 309761.8, 309761.8],
+      _labels: ["2026-03-04", "2026-03-05", "2026-03-06", "2026-03-07", "2026-03-08", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-14", "2026-03-15", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-21", "2026-03-22", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-28", "2026-03-29", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09"],
+      borderColor: '#2196F3',
+      borderWidth: 2,
+      pointRadius: 0,
+      pointHoverRadius: 3,
+      fill: false,
+      tension: 0.3,
+    },{
+      label: 'Conservative',
+      data: [300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000],
+      _labels: ["2026-03-26", "2026-03-27", "2026-03-28", "2026-03-29", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09"],
+      borderColor: '#FF9800',
+      borderWidth: 2,
+      pointRadius: 0,
+      pointHoverRadius: 3,
+      fill: false,
+      tension: 0.3,
+    },{
+      label: 'Aggressive',
+      data: [300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000, 300000],
+      _labels: ["2026-03-26", "2026-03-27", "2026-03-28", "2026-03-29", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09"],
+      borderColor: '#9C27B0',
+      borderWidth: 2,
+      pointRadius: 0,
+      pointHoverRadius: 3,
+      fill: false,
+      tension: 0.3,
+    },];
+const initial = 300000;
+
+if (eqLabels.length > 0) {
+  // Align datasets to the common label set
+  eqDatasets.forEach(ds => {
+    const lmap = {};
+    ds._labels.forEach((l, i) => { lmap[l] = ds.data[i]; });
+    ds.data = eqLabels.map(l => lmap[l] !== undefined ? lmap[l] : null);
+    delete ds._labels;
+  });
+
+  new Chart(document.getElementById('equityCompareChart'), {
+    type: 'line',
+    data: {
+      labels: eqLabels,
+      datasets: [...eqDatasets, {
+        label: '初期資金 (¥' + initial.toLocaleString() + ')',
+        data: eqLabels.map(() => initial),
+        borderColor: '#757575',
+        borderWidth: 1,
+        borderDash: [6,3],
+        pointRadius: 0,
+        fill: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: { display:true, text:'資産推移比較', color:'#9E9E9E', font:{ size:12 } },
+        legend: { labels: { color:'#9E9E9E', font:{ size:10 }, usePointStyle:true, pointStyle:'line' } },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': ¥' + (c.parsed.y != null ? c.parsed.y.toLocaleString() : '-') } }
+      },
+      scales: {
+        x: { ticks: { color:'#757575', maxTicksLimit:8, font:{ size:9 } }, grid: { color:'#2A2A2A' } },
+        y: { ticks: { color:'#757575', font:{ size:9 }, callback: v => '¥' + v.toLocaleString() }, grid: { color:'#2A2A2A' } }
+      },
+      spanGaps: true,
+    }
+  });
+} else {
+  document.getElementById('equityCompareChart').parentElement.innerHTML =
+    '<p style="text-align:center;color:#757575;padding:24px">データがありません</p>';
+}
+
+// EV Sensitivity chart
+const evData = [{"wr": 35, "ev": -158.3, "monthly": -5224.0}, {"wr": 40, "ev": -42.1, "monthly": -1389.0}, {"wr": 45, "ev": 74.0, "monthly": 2442.0}, {"wr": 50, "ev": 190.2, "monthly": 6277.0}, {"wr": 55, "ev": 306.4, "monthly": 10111.0}, {"wr": 60, "ev": 422.5, "monthly": 13942.0}];
+if (evData.length > 0) {
+  const evLabels = evData.map(d => d.wr + '%');
+  const evBars = evData.map(d => d.ev);
+  const evLine = evData.map(d => d.monthly);
+  new Chart(document.getElementById('evSensitivityChart'), {
+    type: 'bar',
+    data: {
+      labels: evLabels,
+      datasets: [{
+        label: 'E[PnL/トレード] (¥)',
+        data: evBars,
+        backgroundColor: evBars.map(v => v >= 0 ? 'rgba(0,200,83,0.7)' : 'rgba(255,23,68,0.7)'),
+        borderRadius: 4,
+        yAxisID: 'y',
+      }, {
+        label: '月間推定 (¥)',
+        data: evLine,
+        type: 'line',
+        borderColor: '#FFD600',
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: evLine.map(v => v >= 0 ? '#00C853' : '#FF1744'),
+        fill: false,
+        yAxisID: 'y1',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        title: { display:true, text:'勝率感度シミュレーション（現在の平均勝ち/負け固定）', color:'#9E9E9E', font:{ size:12 } },
+        legend: { labels: { color:'#9E9E9E', font:{ size:10 } } },
+        tooltip: { callbacks: { label: function(c) {
+          if (c.datasetIndex === 0) return 'E[PnL]: ¥' + c.parsed.y.toLocaleString();
+          return '月間: ¥' + c.parsed.y.toLocaleString();
+        } } }
+      },
+      scales: {
+        x: { title: { display:true, text:'勝率', color:'#757575', font:{ size:9 } }, ticks: { color:'#757575', font:{ size:9 } }, grid: { color:'#2A2A2A' } },
+        y: { position:'left', title: { display:true, text:'E[PnL/トレード] (¥)', color:'#757575', font:{ size:9 } }, ticks: { color:'#757575', font:{ size:9 }, callback: v => '¥' + v.toLocaleString() }, grid: { color:'#2A2A2A' } },
+        y1: { position:'right', title: { display:true, text:'月間推定 (¥)', color:'#FFD600', font:{ size:9 } }, ticks: { color:'#FFD600', font:{ size:9 }, callback: v => '¥' + v.toLocaleString() }, grid: { display:false } }
+      }
+    }
+  });
+} else {
+  document.getElementById('evSensitivityChart').parentElement.innerHTML =
+    '<p style="text-align:center;color:#757575;padding:24px">クローズドトレードのデータがありません</p>';
+}
+
+// N-day accuracy chart
+const nday = {"checkpoints": [5, 10, 15, 20, 30], "win_rates": [60.6, 66.7, 60.6, 66.7, 75.8], "avg_returns": [1.37, 3.6, 4.66, 5.05, 7.63], "sample_counts": [33, 33, 33, 33, 33]};
+if (nday.win_rates && nday.win_rates.length > 0) {
+  new Chart(document.getElementById('ndayChart'), {
+    type: 'bar',
+    data: {
+      labels: nday.checkpoints.map(d => d + '日後'),
+      datasets: [{
+        label: '平均リターン (%)',
+        data: nday.avg_returns,
+        backgroundColor: nday.avg_returns.map(v => v >= 0 ? 'rgba(0,200,83,0.7)' : 'rgba(255,23,68,0.7)'),
+        borderRadius: 4,
+        yAxisID: 'y',
+      }, {
+        label: '勝率 (%)',
+        data: nday.win_rates,
+        type: 'line',
+        borderColor: '#64B5F6',
+        borderWidth: 2,
+        pointRadius: 4,
+        fill: false,
+        yAxisID: 'y1',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        title: { display:true, text:'BUY後N日時点の勝率 & 平均リターン', color:'#9E9E9E', font:{ size:12 } },
+        legend: { labels: { color:'#9E9E9E', font:{ size:10 } } },
+        tooltip: { callbacks: { label: function(c) {
+          const i = c.dataIndex;
+          if (c.datasetIndex === 0) return '平均リターン: ' + nday.avg_returns[i] + '% (n=' + nday.sample_counts[i] + ')';
+          return '勝率: ' + nday.win_rates[i] + '% (n=' + nday.sample_counts[i] + ')';
+        } } }
+      },
+      scales: {
+        x: { ticks: { color:'#757575', font:{ size:9 } }, grid: { color:'#2A2A2A' } },
+        y: { position:'left', title: { display:true, text:'平均リターン (%)', color:'#757575', font:{ size:9 } }, ticks: { color:'#757575', font:{ size:9 }, callback: v => v + '%' }, grid: { color:'#2A2A2A' } },
+        y1: { position:'right', min:0, max:100, title: { display:true, text:'勝率 (%)', color:'#64B5F6', font:{ size:9 } }, ticks: { color:'#64B5F6', font:{ size:9 }, callback: v => v + '%' }, grid: { display:false } }
+      }
+    }
+  });
+} else {
+  document.getElementById('ndayChart').parentElement.innerHTML =
+    '<p style="text-align:center;color:#757575;padding:24px">クローズドトレードのデータがありません</p>';
+}
+
+// SMA analysis
+const sma = null;
+const smaEl = document.getElementById('smaSection');
+if (sma && sma.buckets) {
+  const canvas = document.createElement('canvas');
+  canvas.height = 220;
+  const wrap = document.createElement('div');
+  wrap.className = 'chart-wrap';
+  wrap.appendChild(canvas);
+  smaEl.appendChild(wrap);
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: sma.buckets.map(b => b.label),
+      datasets: [{
+        label: '勝率 (%)',
+        data: sma.buckets.map(b => b.win_rate),
+        backgroundColor: '#42A5F5',
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        title: { display:true, text:'SMA25/75 乖離率レンジ別勝率 (n=' + sma.total_matched + ')', color:'#9E9E9E', font:{ size:12 } },
+        legend: { display:false },
+        tooltip: { callbacks: { label: function(c) {
+          const b = sma.buckets[c.dataIndex];
+          return '勝率: ' + b.win_rate + '% (' + b.wins + '/' + b.count + '件)';
+        } } }
+      },
+      scales: {
+        x: { title: { display:true, text:'SMA乖離率', color:'#757575', font:{ size:9 } }, ticks: { color:'#757575', font:{ size:9 } }, grid: { color:'#2A2A2A' } },
+        y: { min:0, max:100, ticks: { color:'#757575', font:{ size:9 }, callback: v => v + '%' }, grid: { color:'#2A2A2A' } }
+      }
+    }
+  });
+} else {
+  smaEl.innerHTML = '<div class="data-note">SMA乖離率データを蓄積中です。新規エントリーが記録された後に表示されます。</div>';
+}
+</script>
+</body>
+</html>

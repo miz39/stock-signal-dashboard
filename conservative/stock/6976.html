@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>太陽誘電（6976）- Stock Detail</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#121212; color:#E0E0E0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; padding:16px; max-width:960px; margin:0 auto; }
+a.back { color:#64B5F6; text-decoration:none; font-size:0.85rem; display:inline-block; margin-bottom:12px; }
+a.back:hover { text-decoration:underline; }
+.header { margin-bottom:16px; }
+.header h1 { font-size:1.3rem; }
+.header .code { color:#757575; font-size:0.85rem; }
+.updated { font-size:0.75rem; color:#757575; margin-bottom:16px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:20px; }
+.card { background:#1E1E1E; border-radius:10px; padding:14px; text-align:center; }
+.card .label { font-size:0.7rem; color:#9E9E9E; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; }
+.card .value { font-size:1.4rem; font-weight:700; }
+.card .sub, .card-sub { font-size:0.7rem; color:#757575; margin-top:2px; }
+.section { margin-bottom:20px; }
+.section h2 { font-size:1rem; margin-bottom:8px; padding-bottom:4px; border-bottom:1px solid #333; }
+.chart-wrap { background:#1E1E1E; border-radius:10px; padding:12px; margin-bottom:20px; }
+.green { color:#00C853; }
+.red { color:#FF1744; }
+@media(max-width:480px) {
+  .cards { grid-template-columns:repeat(2,1fr); }
+  .card .value { font-size:1.2rem; }
+}
+</style>
+</head>
+<body>
+<a class="back" href="../index.html">&larr; ダッシュボードに戻る</a>
+<div class="header">
+  <h1>太陽誘電</h1>
+  <span class="code">6976.T</span>
+</div>
+<div class="updated">最終更新: 2026-04-04 00:45 JST</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="label">現在価格</div>
+    <div class="value" style="color:#9E9E9E">&yen;nan</div>
+    <div class="sub" style="color:#9E9E9E">nan%</div>
+  </div>
+  <div class="card">
+    <div class="label">RSI(14)</div>
+    <div class="value" style="color:#64B5F6">45.6</div>
+    <div class="sub">適正</div>
+  </div>
+  <div class="card">
+    <div class="label">SMAクロス</div>
+    <div class="value" style="color:#FF1744">-</div>
+  </div>
+  <div class="card">
+    <div class="label">損切りライン</div>
+    <div class="value" style="color:#FF1744">&yen;3,935</div>
+    <div class="sub">取得価格の -5%</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>株価チャート（6ヶ月）</h2>
+  <div class="chart-wrap">
+    <canvas id="priceChart" height="300"></canvas>
+  </div>
+</div>
+
+<div class="section">
+  <h2>ファンダメンタル</h2>
+  <div class="cards">
+    <div class="card"><div class="label">PER</div><div class="value">143.0倍</div><div class="card-sub">割高</div></div><div class="card"><div class="label">PBR</div><div class="value">1.61倍</div><div class="card-sub">適正</div></div><div class="card"><div class="label">ROE</div><div class="value">2.0%</div><div class="card-sub">低収益</div></div><div class="card"><div class="label">配当利回り</div><div class="value">2.33%</div></div><div class="card"><div class="label">時価総額</div><div class="value">&yen;5452億</div></div>
+  </div>
+</div>
+
+<script>
+const dates = ["2025-10-03", "2025-10-06", "2025-10-07", "2025-10-08", "2025-10-09", "2025-10-10", "2025-10-14", "2025-10-15", "2025-10-16", "2025-10-17", "2025-10-20", "2025-10-21", "2025-10-22", "2025-10-23", "2025-10-24", "2025-10-27", "2025-10-28", "2025-10-29", "2025-10-30", "2025-10-31", "2025-11-04", "2025-11-05", "2025-11-06", "2025-11-07", "2025-11-10", "2025-11-11", "2025-11-12", "2025-11-13", "2025-11-14", "2025-11-17", "2025-11-18", "2025-11-19", "2025-11-20", "2025-11-21", "2025-11-25", "2025-11-26", "2025-11-27", "2025-11-28", "2025-12-01", "2025-12-02", "2025-12-03", "2025-12-04", "2025-12-05", "2025-12-08", "2025-12-09", "2025-12-10", "2025-12-11", "2025-12-12", "2025-12-15", "2025-12-16", "2025-12-17", "2025-12-18", "2025-12-19", "2025-12-22", "2025-12-23", "2025-12-24", "2025-12-25", "2025-12-26", "2025-12-29", "2025-12-30", "2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-19", "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23", "2026-01-26", "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06", "2026-02-09", "2026-02-10", "2026-02-12", "2026-02-13", "2026-02-16", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03"];
+const prices = [3405.4, 3503.4, 3437.1, 3558.7, 3593.4, 3436.1, 3311.5, 3424.2, 3523.1, 3508.3, 3659.6, 3636.9, 3689.3, 3603.3, 3846.6, 4080.0, 4057.3, 4170.0, 4163.1, 4353.0, 4433.1, 4163.1, 4297.6, 3605.2, 3511.3, 3370.8, 3322.4, 3271.9, 3331.3, 3251.1, 3093.9, 3111.7, 3228.4, 3125.5, 3170.0, 3192.8, 3210.6, 3223.4, 3319.4, 3436.1, 3658.6, 3831.7, 3818.9, 3816.9, 3800.1, 3754.6, 3595.3, 3597.3, 3480.6, 3363.9, 3377.7, 3326.3, 3333.2, 3450.9, 3464.8, 3516.2, 3538.0, 3498.4, 3494.5, 3501.4, 3632.9, 3575.6, 3586.4, 3370.8, 3367.9, 3408.4, 3643.8, 3578.5, 3590.4, 3584.5, 3511.3, 3493.5, 3561.7, 3541.9, 3354.0, 3334.2, 3237.3, 3193.8, 3205.6, 3232.3, 3370.8, 3409.4, 3467.8, 3492.5, 3858.4, 3972.2, 4084.0, 4018.7, 4043.4, 4395.5, 4556.7, 4614.1, 4583.4, 4917.8, 5075.0, 4835.7, 4743.7, 4813.9, 4408.4, 4194.7, 4319.4, 4277.8, 3897.0, 4044.4, 4055.3, 3956.4, 3893.1, 3934.6, 4136.4, 4292.7, 4108.7, 3883.2, 3927.7, 4063.2, 4114.6, 4080.0, 3825.0, 3694.0, 4045.0, 3861.0, NaN];
+const sma25 = [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 3758.8, 3757.4, 3750.2, 3743.6, 3734.5, 3720.8, 3707.1, 3699.1, 3691.3, 3675.4, 3661.9, 3643.2, 3626.1, 3607.5, 3596.1, 3579.7, 3562.9, 3553.8, 3539.8, 3526.0, 3503.8, 3476.7, 3454.0, 3426.0, 3421.0, 3415.1, 3415.4, 3415.5, 3418.0, 3422.8, 3431.3, 3448.2, 3465.3, 3476.1, 3490.8, 3504.1, 3521.7, 3536.3, 3550.8, 3552.9, 3550.1, 3540.1, 3532.6, 3523.0, 3513.9, 3505.3, 3495.6, 3491.5, 3490.1, 3492.5, 3492.1, 3490.4, 3486.8, 3481.2, 3471.4, 3462.1, 3456.3, 3451.2, 3449.9, 3449.9, 3464.2, 3477.7, 3498.1, 3515.3, 3542.3, 3583.4, 3629.3, 3668.1, 3708.3, 3761.4, 3821.0, 3874.0, 3924.0, 3974.1, 4008.7, 4042.4, 4081.8, 4123.4, 4151.5, 4185.1, 4218.0, 4241.4, 4260.8, 4279.4, 4305.2, 4322.6, 4328.0, 4320.0, 4316.4, 4317.1, 4305.9, 4286.8, 4255.3, 4219.7, 4184.8, 4136.2, null];
+const sma75 = [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 3555.3, 3554.4, 3550.8, 3547.6, 3542.9, 3538.1, 3537.2, 3538.5, 3539.1, 3538.7, 3543.4, 3547.5, 3553.5, 3557.9, 3563.7, 3571.1, 3577.4, 3584.8, 3590.4, 3600.4, 3610.0, 3615.4, 3623.2, 3630.0, 3640.8, 3649.9, 3662.5, 3675.3, 3683.6, 3693.1, 3703.8, 3715.3, 3725.7, 3735.2, 3748.6, 3763.6, 3775.8, 3784.8, 3794.2, 3804.1, 3813.1, 3818.7, 3818.7, 3817.0, 3820.0, 3820.8, null];
+const sma200 = [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+const entryPrice = 4142.0;
+const entryDate = '2026-03-26';
+
+if (dates.length > 0) {
+  const ctx = document.getElementById('priceChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [
+        {
+          label: '終値',
+          data: prices,
+          borderColor: '#2196F3',
+          backgroundColor: 'rgba(33,150,243,0.05)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          borderWidth: 2,
+          order: 1,
+        },
+        {
+          label: 'SMA25',
+          data: sma25,
+          borderColor: '#FF9800',
+          borderWidth: 1,
+          borderDash: [4,2],
+          pointRadius: 0,
+          fill: false,
+          order: 2,
+        },
+        {
+          label: 'SMA75',
+          data: sma75,
+          borderColor: '#9C27B0',
+          borderWidth: 1,
+          borderDash: [4,2],
+          pointRadius: 0,
+          fill: false,
+          order: 3,
+        },
+        {
+          label: 'SMA200',
+          data: sma200,
+          borderColor: '#607D8B',
+          borderWidth: 1,
+          borderDash: [6,3],
+          pointRadius: 0,
+          fill: false,
+          order: 4,
+        },
+        {
+          label: '取得単価',
+          data: dates.map(() => entryPrice),
+          borderColor: '#F44336',
+          borderWidth: 1,
+          borderDash: [8,4],
+          pointRadius: 0,
+          fill: false,
+          order: 5,
+        },
+        ...(entryDate && dates.includes(entryDate) ? [{
+          label: '購入日',
+          data: dates.map(d => d === entryDate ? entryPrice : null),
+          borderColor: 'transparent',
+          backgroundColor: '#F44336',
+          pointRadius: 8,
+          pointStyle: 'triangle',
+          pointRotation: 0,
+          showLine: false,
+          order: 0,
+        }] : []),
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color:'#9E9E9E', font:{ size:11 }, usePointStyle:true, pointStyle:'line' } },
+        annotation: entryDate && dates.includes(entryDate) ? {
+          annotations: {
+            entryLine: {
+              type: 'line',
+              xMin: entryDate,
+              xMax: entryDate,
+              borderColor: 'rgba(244,67,54,0.4)',
+              borderWidth: 1,
+              borderDash: [4,3],
+              label: {
+                display: true,
+                content: '購入 ' + entryDate,
+                position: 'start',
+                backgroundColor: 'rgba(244,67,54,0.8)',
+                color: '#fff',
+                font: { size: 10 },
+                padding: 4,
+              }
+            }
+          }
+        } : {},
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.parsed.y == null) return null;
+              return ctx.dataset.label + ': ¥' + ctx.parsed.y.toLocaleString();
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color:'#757575', maxTicksLimit:8, font:{ size:10 } },
+          grid: { color:'#2A2A2A' }
+        },
+        y: {
+          ticks: {
+            color:'#757575',
+            font:{ size:10 },
+            callback: function(v) { return '¥' + v.toLocaleString(); }
+          },
+          grid: { color:'#2A2A2A' }
+        }
+      }
+    }
+  });
+} else {
+  document.getElementById('priceChart').parentElement.innerHTML =
+    '<p style="text-align:center;color:#757575;padding:24px">チャートデータがありません</p>';
+}
+</script>
+</body>
+</html>

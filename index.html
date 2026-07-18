@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paper Trade Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#121212; color:#E0E0E0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; padding:16px; max-width:960px; margin:0 auto; }
+h1 { font-size:1.3rem; margin-bottom:4px; }
+.updated { font-size:0.75rem; color:#757575; margin-bottom:16px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:20px; }
+.card { background:#1E1E1E; border-radius:10px; padding:14px; text-align:center; }
+.card .label { font-size:0.7rem; color:#9E9E9E; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; }
+.card .value { font-size:1.4rem; font-weight:700; }
+.card .sub { font-size:0.7rem; color:#757575; margin-top:2px; }
+.section { margin-bottom:20px; }
+.section h2 { font-size:1rem; margin-bottom:8px; padding-bottom:4px; border-bottom:1px solid #333; }
+.chart-wrap { background:#1E1E1E; border-radius:10px; padding:12px; margin-bottom:20px; }
+table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+th { background:#1E1E1E; color:#9E9E9E; text-align:left; padding:8px 6px; font-weight:500; font-size:0.7rem; text-transform:uppercase; position:sticky; top:0; }
+td { padding:8px 6px; border-bottom:1px solid #2A2A2A; }
+td.num { text-align:right; font-variant-numeric:tabular-nums; }
+.ticker { color:#757575; font-size:0.7rem; }
+.small { font-size:0.7rem; }
+.empty { text-align:center; color:#757575; padding:24px; }
+.hero-card { background:#1E1E1E; border-radius:12px; padding:20px; text-align:center; margin-bottom:12px; }
+.hero-card .label { font-size:0.7rem; color:#9E9E9E; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+.hero-value { font-size:2rem; font-weight:700; }
+.hero-change { font-size:1rem; font-weight:600; margin-top:2px; }
+.green { color:#00C853; }
+.red { color:#FF1744; }
+.readiness-card { background:#1E1E1E; border-radius:10px; padding:14px; margin-bottom:20px; }
+.readiness-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+.readiness-title { font-size:0.9rem; font-weight:600; color:#E0E0E0; }
+.readiness-status { font-size:0.8rem; font-weight:600; }
+.readiness-bar { background:#2A2A2A; height:6px; border-radius:3px; overflow:hidden; margin-bottom:10px; }
+.readiness-bar-fill { height:100%; border-radius:3px; transition:width 0.3s; }
+.readiness-row { display:flex; align-items:center; padding:4px 0; font-size:0.8rem; }
+.readiness-icon { width:18px; font-weight:700; }
+.readiness-label { flex:1; color:#BDBDBD; }
+.readiness-value { font-variant-numeric:tabular-nums; color:#E0E0E0; }
+.policy-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
+.policy-card { background:#1E1E1E; border-radius:10px; padding:14px; }
+.policy-title { font-size:0.7rem; color:#9E9E9E; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; font-weight:500; }
+.policy-body { font-size:0.8rem; }
+.policy-name { color:#64B5F6; font-weight:600; margin-bottom:6px; }
+.policy-rule { color:#B0BEC5; font-size:0.75rem; margin:3px 0; padding:4px 8px; background:#262626; border-radius:4px; }
+.buy-rule { border-left:3px solid #00C853; }
+.sell-rule { border-left:3px solid #FF1744; }
+.policy-item { display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #2A2A2A; }
+.policy-item:last-child { border-bottom:none; }
+.policy-val { color:#E0E0E0; font-weight:600; }
+a.stock-link { color:#64B5F6; text-decoration:none; }
+a.stock-link:hover { text-decoration:underline; }
+@media(max-width:600px) {
+  .cards { grid-template-columns:repeat(2,1fr); }
+  .card .value { font-size:1.2rem; }
+  .policy-grid { grid-template-columns:1fr; }
+  table { font-size:0.75rem; }
+  td, th { padding:6px 4px; }
+}
+</style>
+</head>
+<body>
+<h1>Paper Trade Dashboard</h1>
+<div class="updated">最終更新: 2026-07-18 13:56 JST &nbsp;|&nbsp; <a href="history.html" style="color:#64B5F6;text-decoration:none">実行履歴 &rarr;</a> &nbsp;|&nbsp; <a href="weekly-review.html" style="color:#64B5F6;text-decoration:none">週次レビュー &rarr;</a> &nbsp;|&nbsp; <a href="analysis.html" style="color:#64B5F6;text-decoration:none">AI分析 &rarr;</a></div>
+
+<div class="hero-card">
+  <div class="label">総資産</div>
+  <div class="hero-value">&yen;327,991</div>
+  <div class="hero-change" style="color:#00C853">+27,991（+9.33%）</div>
+  <div class="sub">初期資金 &yen;300,000</div>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="label">株時価</div>
+    <div class="value">&yen;321,310</div>
+    <div class="sub">10銘柄保有</div>
+  </div>
+  <div class="card">
+    <div class="label">現金</div>
+    <div class="value">&yen;6,681</div>
+  </div>
+  <div class="card">
+    <div class="label">確定損益</div>
+    <div class="value" style="color:#00C853">&yen;+27,359</div>
+    <div class="sub">100トレード</div>
+  </div>
+  <div class="card">
+    <div class="label">含み損益</div>
+    <div class="value" style="color:#00C853">&yen;+632</div>
+  </div>
+  <div class="card">
+    <div class="label">勝率</div>
+    <div class="value">53.0%</div>
+    <div class="sub">53勝47敗</div>
+  </div>
+  <div class="card">
+    <div class="label">最大DD</div>
+    <div class="value red">&yen;24,737</div>
+  </div>
+</div>
+
+<div class="chart-wrap">
+  <canvas id="equityChart" height="200"></canvas>
+</div>
+
+<div class="readiness-card">
+  <div class="readiness-head">
+    <div class="readiness-title" data-tip="ペーパートレードからリアル運用に移行するための5基準（サンプル数/PF/最大DD/直近30件PF/勝率）の達成度">リアル移行準備度 80% (4/5 基準達成)</div>
+    <div class="readiness-status" style="color:#FFA726">準備中（もう一歩）</div>
+  </div>
+  <div class="readiness-bar"><div class="readiness-bar-fill" style="width:80.0%;background:#FFA726"></div></div>
+  <div class="readiness-row" style="color:#00C853"><span class="readiness-icon">✓</span><span class="readiness-label" data-tip="Trade Count — 統計的に有意な結果を得るために必要な最低トレード数">サンプル数</span><span class="readiness-value">100/100</span></div><div class="readiness-row" style="color:#FF8A80"><span class="readiness-icon">✗</span><span class="readiness-label" data-tip="Profit Factor — 総利益 ÷ 総損失。1.0超で利益が損失を上回る。1.5以上が目標">PF</span><span class="readiness-value">1.39 / 1.5</span></div><div class="readiness-row" style="color:#00C853"><span class="readiness-icon">✓</span><span class="readiness-label" data-tip="Maximum Drawdown — 累計損益のピークからの最大下落率。資金管理の安定性を測る">最大DD</span><span class="readiness-value">6.0% / 10%</span></div><div class="readiness-row" style="color:#00C853"><span class="readiness-icon">✓</span><span class="readiness-label" data-tip="直近30件PF — 直近30トレードのプロフィットファクター。戦略の劣化を検知する">直近30件PF</span><span class="readiness-value">1.92 / 1.0</span></div><div class="readiness-row" style="color:#00C853"><span class="readiness-icon">✓</span><span class="readiness-label" data-tip="Win Rate — 決済済みトレードのうちプラスで終了した割合">勝率</span><span class="readiness-value">53.0% / 45%</span></div>
+</div>
+
+<div class="section">
+  <h2>運用方針</h2>
+  <div class="policy-grid">
+    <div class="policy-card">
+      <div class="policy-title">戦略</div>
+      <div class="policy-body">
+        <div class="policy-name">ゴールデンクロス + RSI コンファーメーション</div>
+        <div class="policy-rule buy-rule">買い: SMA25 &gt; SMA100 &amp; RSI &lt; 70 &amp; 株価 &gt; SMA200</div>
+        <div class="policy-rule sell-rule">売り: SMA25 &lt; SMA100 or RSI &gt; 75</div>
+      </div>
+    </div>
+    <div class="policy-card">
+      <div class="policy-title">リスク管理</div>
+      <div class="policy-body">
+        <div class="policy-item">損切り <span class="policy-val">-5%</span></div>
+        <div class="policy-item">1トレードリスク <span class="policy-val">2%</span></div>
+        <div class="policy-item">1銘柄上限 <span class="policy-val">10%</span></div>
+      </div>
+    </div>
+    <div class="policy-card">
+      <div class="policy-title">口座</div>
+      <div class="policy-body">
+        <div class="policy-item">初期資金 <span class="policy-val">&yen;300,000</span></div>
+        <div class="policy-item">最大銘柄数 <span class="policy-val">10銘柄</span></div>
+        <div class="policy-item">モード <span class="policy-val">ペーパー</span></div>
+      </div>
+    </div>
+    <div class="policy-card">
+      <div class="policy-title">スキャン</div>
+      <div class="policy-body">
+        <div class="policy-item">対象 <span class="policy-val">日経225全銘柄</span></div>
+        <div class="policy-item">実行 <span class="policy-val">1日3回</span></div>
+        <div class="policy-item">時刻 <span class="policy-val">8:50 / 12:35 / 15:10</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+  <div class="chart-wrap"><canvas id="sectorChart" height="220"></canvas></div>
+  <div class="chart-wrap"><canvas id="monthlyChart" height="220"></canvas></div>
+</div>
+<div class="chart-wrap">
+  <canvas id="ddChart" height="120"></canvas>
+</div>
+<div class="chart-wrap">
+  <canvas id="scatterChart" height="200"></canvas>
+</div>
+
+<div class="section">
+  <h2>シグナル精度（保有期間別）</h2>
+  <div class="chart-wrap"><canvas id="sigAccChart" height="220"></canvas></div>
+</div>
+
+<div class="section">
+  <h2>RSI 有効性分析</h2>
+  <div class="chart-wrap"><canvas id="rsiChart" height="220"></canvas></div>
+</div>
+
+<div class="section">
+  <h2>直近の買い候補 TOP5</h2>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr><th>銘柄</th><th>株価</th><th>RSI</th><th>Score</th><th>TV推奨</th><th>推奨株数</th></tr></thead>
+    <tbody><tr>
+<td>三井住友トラスト・ホールディングス<br><span class="ticker">8309</span></td>
+<td class="num">&yen;6,450</td>
+<td class="num">57.2</td>
+<td class="num">0.66</td>
+<td class="num"><span style="color:#FFC107;font-weight:600">TV:NEUTRAL</span></td>
+<td class="num">5</td>
+</tr><tr>
+<td>三菱UFJフィナンシャル・グループ<br><span class="ticker">8306</span></td>
+<td class="num">&yen;3,473</td>
+<td class="num">57.2</td>
+<td class="num">0.64</td>
+<td class="num"><span style="color:#FFC107;font-weight:600">TV:NEUTRAL</span></td>
+<td class="num">9</td>
+</tr><tr>
+<td>三井住友フィナンシャルグループ<br><span class="ticker">8316</span></td>
+<td class="num">&yen;6,721</td>
+<td class="num">54.2</td>
+<td class="num">0.64</td>
+<td class="num"><span style="color:#FFC107;font-weight:600">TV:NEUTRAL</span></td>
+<td class="num">4</td>
+</tr><tr>
+<td>野村ホールディングス<br><span class="ticker">8604</span></td>
+<td class="num">&yen;1,520</td>
+<td class="num">56.5</td>
+<td class="num">0.64</td>
+<td class="num"><span style="color:#FFC107;font-weight:600">TV:NEUTRAL</span></td>
+<td class="num">21</td>
+</tr><tr>
+<td>大和証券グループ本社<br><span class="ticker">8601</span></td>
+<td class="num">&yen;1,780</td>
+<td class="num">61.0</td>
+<td class="num">0.62</td>
+<td class="num"><span style="color:#FFC107;font-weight:600">TV:NEUTRAL</span></td>
+<td class="num">18</td>
+</tr></tbody>
+  </table>
+  </div>
+</div>
+
+<div class="section">
+  <h2>保有中ポジション</h2>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr><th>銘柄</th><th>取得</th><th>現在</th><th>株数</th><th>損益</th><th>保有</th></tr></thead>
+    <tbody><tr>
+<td><a class="stock-link" href="stock/6178.html">日本郵政</a><br><span class="ticker">6178</span></td>
+<td class="num">&yen;2,228</td>
+<td class="num">&yen;2,329</td>
+<td class="num">14</td>
+<td class="num" style="color:#00C853">+1,421<br><span class="small">(+4.6%)</span></td>
+<td class="num">26日</td>
+</tr><tr>
+<td><a class="stock-link" href="stock/4208.html">UBE</a><br><span class="ticker">4208</span></td>
+<td class="num">&yen;3,129</td>
+<td class="num">&yen;3,208</td>
+<td class="num">10</td>
+<td class="num" style="color:#00C853">+790<br><span class="small">(+2.5%)</span></td>
+<td class="num">25日</td>
+</tr><tr>
+<td><a class="stock-link" href="stock/2501.html">サッポロホールディングス</a><br><span class="ticker">2501</span></td>
+<td class="num">&yen;1,925</td>
+<td class="num">&yen;2,045</td>
+<td class="num">16</td>
+<td class="num" style="color:#00C853">+1,917<br><span class="small">(+6.2%)</span></td>
+<td class="num">17日</td>
+</tr><tr>
+<td><a class="stock-link" href="stock/3099.html">三越伊勢丹ホールディングス</a><br><span class="ticker">3099</span></td>
+<td class="num">&yen;3,928</td>
+<td class="num">&yen;3,895</td>
+<td class="num">8</td>
+<td class="num" style="color:#FF1744">-264<br><span class="small">(-0.8%)</span></td>
+<td class="num">15日</td>
+</tr><tr>
+<td><a class="stock-link" href="stock/6971.html">京セラ</a><br><span class="ticker">6971</span></td>
+<td class="num">&yen;3,731</td>
+<td class="num">&yen;3,556</td>
+<td class="num">9</td>
+<td class="num" style="color:#FF1744">-1,577<br><span class="small">(-4.7%)</span></td>
+<td class="num">11日</td>
+</tr><tr>
+<td><a class="stock-link" href="stock/9201.html">日本航空</a><br><span class="ticker">9201</span></td>
+<td class="num">&yen;2,984</td>
+<td class="num">&yen;2,904</td>
+<td class="num">11</td>
+<td class="num" style="color:#FF1744">-874<br><span class="small">(-2.7%)</span></td>
+<td class="num">9日</td>
+</tr><tr>
+<td><a class="stock-link" href="stock/8750.html">第一生命ホールディングス</a><br><span class="ticker">8750</span></td>
+<td class="num">&yen;1,828</td>
+<td class="num">&yen;1,799</td>
+<td class="num">18</td>
+<td class="num" style="color:#FF1744">-522<br><span class="small">(-1.6%)</span></td>
+<td class="num">5日</td>
+</tr><tr>
+<td><a class="stock-link" href="stock/9147.html">NIPPON EXPRESSホールディングス</a><br><span class="ticker">9147</span></td>
+<td class="num">&yen;5,428</td>
+<td class="num">&yen;5,385</td>
+<td class="num">6</td>
+<td class="num" style="color:#FF1744">-258<br><span class="small">(-0.8%)</span></td>
+<td class="num">2日</td>
+</tr><tr>
+<td><a class="stock-link" href="stock/8309.html">三井住友トラスト・ホールディングス</a><br><span class="ticker">8309</span></td>
+<td class="num">&yen;6,450</td>
+<td class="num">&yen;6,450</td>
+<td class="num">5</td>
+<td class="num" style="color:#9E9E9E">0<br><span class="small">(+0.0%)</span></td>
+<td class="num">1日</td>
+</tr><tr>
+<td><a class="stock-link" href="stock/4151.html">協和キリン</a><br><span class="ticker">4151</span></td>
+<td class="num">&yen;2,654</td>
+<td class="num">&yen;2,654</td>
+<td class="num">12</td>
+<td class="num" style="color:#9E9E9E">0<br><span class="small">(+0.0%)</span></td>
+<td class="num">1日</td>
+</tr></tbody>
+  </table>
+  </div>
+</div>
+
+<div class="section">
+  <h2>直近クローズドトレード</h2>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr><th>銘柄</th><th>取得</th><th>売却</th><th>株数</th><th>損益</th><th>期間</th></tr></thead>
+    <tbody><tr>
+<td>日産化学<br><span class="ticker">4021</span></td>
+<td class="num">&yen;8,320</td>
+<td class="num">&yen;7,608</td>
+<td class="num">4</td>
+<td class="num" style="color:#FF1744">-2,850</td>
+<td class="num">2026-07-07<br>2026-07-17</td>
+</tr><tr>
+<td>ニチレイ<br><span class="ticker">2871</span></td>
+<td class="num">&yen;2,100</td>
+<td class="num">&yen;1,940</td>
+<td class="num">15</td>
+<td class="num" style="color:#FF1744">-2,400</td>
+<td class="num">2026-07-01<br>2026-07-15</td>
+</tr><tr>
+<td>三菱UFJフィナンシャル・グループ<br><span class="ticker">8306</span></td>
+<td class="num">&yen;3,121</td>
+<td class="num">&yen;3,600</td>
+<td class="num">5</td>
+<td class="num" style="color:#00C853">+2,395</td>
+<td class="num">2026-06-11<br>2026-07-14</td>
+</tr><tr>
+<td>東海カーボン<br><span class="ticker">5301</span></td>
+<td class="num">&yen;1,728</td>
+<td class="num">&yen;1,610</td>
+<td class="num">18</td>
+<td class="num" style="color:#FF1744">-2,115</td>
+<td class="num">2026-06-23<br>2026-07-13</td>
+</tr><tr>
+<td>サッポロホールディングス<br><span class="ticker">2501</span></td>
+<td class="num">&yen;1,872</td>
+<td class="num">&yen;2,082</td>
+<td class="num">8</td>
+<td class="num" style="color:#00C853">+1,680</td>
+<td class="num">2026-07-01<br>2026-07-08</td>
+</tr><tr>
+<td>リクルートホールディングス<br><span class="ticker">6098</span></td>
+<td class="num">&yen;10,865</td>
+<td class="num">&yen;12,300</td>
+<td class="num">1</td>
+<td class="num" style="color:#00C853">+1,435</td>
+<td class="num">2026-06-22<br>2026-07-07</td>
+</tr><tr>
+<td>三菱UFJフィナンシャル・グループ<br><span class="ticker">8306</span></td>
+<td class="num">&yen;3,121</td>
+<td class="num">&yen;3,446</td>
+<td class="num">5</td>
+<td class="num" style="color:#00C853">+1,625</td>
+<td class="num">2026-06-11<br>2026-07-07</td>
+</tr><tr>
+<td>日本ガイシ<br><span class="ticker">5333</span></td>
+<td class="num">&yen;7,392</td>
+<td class="num">&yen;7,125</td>
+<td class="num">4</td>
+<td class="num" style="color:#FF1744">-1,068</td>
+<td class="num">2026-07-02<br>2026-07-07</td>
+</tr><tr>
+<td>リクルートホールディングス<br><span class="ticker">6098</span></td>
+<td class="num">&yen;10,865</td>
+<td class="num">&yen;12,300</td>
+<td class="num">1</td>
+<td class="num" style="color:#00C853">+1,435</td>
+<td class="num">2026-06-22<br>2026-07-07</td>
+</tr><tr>
+<td>NIPPON EXPRESSホールディングス<br><span class="ticker">9147</span></td>
+<td class="num">&yen;5,035</td>
+<td class="num">&yen;5,552</td>
+<td class="num">3</td>
+<td class="num" style="color:#00C853">+1,551</td>
+<td class="num">2026-06-11<br>2026-07-06</td>
+</tr><tr>
+<td>NIPPON EXPRESSホールディングス<br><span class="ticker">9147</span></td>
+<td class="num">&yen;5,035</td>
+<td class="num">&yen;5,552</td>
+<td class="num">3</td>
+<td class="num" style="color:#00C853">+1,551</td>
+<td class="num">2026-06-11<br>2026-07-06</td>
+</tr><tr>
+<td>りそなホールディングス<br><span class="ticker">8308</span></td>
+<td class="num">&yen;2,036</td>
+<td class="num">&yen;2,246</td>
+<td class="num">8</td>
+<td class="num" style="color:#00C853">+1,672</td>
+<td class="num">2026-05-28<br>2026-07-03</td>
+</tr><tr>
+<td>三菱ケミカルグループ<br><span class="ticker">4188</span></td>
+<td class="num">&yen;1,088</td>
+<td class="num">&yen;1,130</td>
+<td class="num">28</td>
+<td class="num" style="color:#00C853">+1,162</td>
+<td class="num">2026-06-01<br>2026-07-02</td>
+</tr><tr>
+<td>SUMCO<br><span class="ticker">3436</span></td>
+<td class="num">&yen;3,794</td>
+<td class="num">&yen;4,729</td>
+<td class="num">8</td>
+<td class="num" style="color:#00C853">+7,480</td>
+<td class="num">2026-06-25<br>2026-07-01</td>
+</tr><tr>
+<td>AGC<br><span class="ticker">5201</span></td>
+<td class="num">&yen;7,358</td>
+<td class="num">&yen;7,146</td>
+<td class="num">4</td>
+<td class="num" style="color:#FF1744">-850</td>
+<td class="num">2026-06-09<br>2026-06-26</td>
+</tr><tr>
+<td>カナデビア<br><span class="ticker">7004</span></td>
+<td class="num">&yen;1,432</td>
+<td class="num">&yen;1,283</td>
+<td class="num">23</td>
+<td class="num" style="color:#FF1744">-3,432</td>
+<td class="num">2026-06-19<br>2026-06-25</td>
+</tr><tr>
+<td>ソフトバンクグループ<br><span class="ticker">9984</span></td>
+<td class="num">&yen;7,306</td>
+<td class="num">&yen;6,513</td>
+<td class="num">4</td>
+<td class="num" style="color:#FF1744">-3,172</td>
+<td class="num">2026-06-15<br>2026-06-23</td>
+</tr><tr>
+<td>ローム<br><span class="ticker">6963</span></td>
+<td class="num">&yen;4,951</td>
+<td class="num">&yen;5,509</td>
+<td class="num">5</td>
+<td class="num" style="color:#00C853">+2,789</td>
+<td class="num">2026-06-11<br>2026-06-22</td>
+</tr><tr>
+<td>ミネベアミツミ<br><span class="ticker">6479</span></td>
+<td class="num">&yen;4,391</td>
+<td class="num">&yen;5,054</td>
+<td class="num">6</td>
+<td class="num" style="color:#00C853">+3,980</td>
+<td class="num">2026-06-11<br>2026-06-22</td>
+</tr><tr>
+<td>三越伊勢丹ホールディングス<br><span class="ticker">3099</span></td>
+<td class="num">&yen;3,433</td>
+<td class="num">&yen;3,959</td>
+<td class="num">4</td>
+<td class="num" style="color:#00C853">+2,104</td>
+<td class="num">2026-06-08<br>2026-06-22</td>
+</tr></tbody>
+  </table>
+  </div>
+</div>
+
+<script>
+const labels = ["2026-03-04", "2026-03-05", "2026-03-06", "2026-03-07", "2026-03-08", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-14", "2026-03-15", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-21", "2026-03-22", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-28", "2026-03-29", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-11", "2026-04-12", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-18", "2026-04-19", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-25", "2026-04-26", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-01", "2026-05-02", "2026-05-03", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-09", "2026-05-10", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-16", "2026-05-17", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-23", "2026-05-24", "2026-05-25", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-05-30", "2026-05-31", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-06", "2026-06-07", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-13", "2026-06-14", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-20", "2026-06-21", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-27", "2026-06-28", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-04", "2026-07-05", "2026-07-06", "2026-07-07", "2026-07-08", "2026-07-09", "2026-07-10", "2026-07-11", "2026-07-12", "2026-07-13", "2026-07-14", "2026-07-15", "2026-07-16", "2026-07-17", "2026-07-18"];
+const data = [300000, 300000, 300000, 300000, 300000, 293542.0, 293542.0, 293542.0, 294766.0, 293630.8, 293630.8, 293630.8, 292423.3, 292423.3, 292423.3, 292423.3, 292423.3, 292423.3, 292423.3, 289696.0, 288174.1, 288174.1, 294722.1, 294778.1, 294778.1, 294778.1, 294778.1, 297920.3, 298942.8, 300042.8, 301112.9, 301112.9, 301112.9, 301112.9, 301112.9, 309795.0, 309795.0, 309165.0, 309165.0, 309165.0, 309165.0, 309165.0, 309165.0, 309165.0, 306635.0, 306635.0, 306635.0, 306635.0, 302951.5, 302951.5, 302864.5, 302864.5, 302864.5, 302864.5, 295693.0, 295693.0, 295693.0, 293670.0, 291261.6, 291261.6, 291261.6, 291261.6, 291261.6, 291261.6, 298531.6, 298531.6, 298531.6, 298531.6, 300811.6, 300811.6, 300811.6, 300811.6, 300811.6, 300811.6, 300811.6, 300811.6, 302203.8, 302203.8, 302203.8, 305701.3, 305701.3, 305701.3, 307355.3, 307355.3, 310032.3, 310550.3, 310550.3, 310550.3, 310550.3, 310550.3, 308096.2, 312096.2, 312096.2, 316746.2, 316746.2, 316746.2, 310894.4, 309526.4, 310085.9, 305873.9, 301893.5, 301893.5, 301893.5, 308588.5, 308588.5, 309890.5, 312386.5, 312386.5, 312386.5, 312386.5, 321259.3, 318087.3, 318087.3, 314655.7, 313805.7, 313805.7, 313805.7, 313805.7, 313805.7, 321285.7, 322447.7, 324119.7, 324119.7, 324119.7, 327221.7, 330648.7, 332328.7, 332328.7, 332328.7, 332328.7, 332328.7, 330213.7, 332608.7, 330208.7, 330208.7, 327358.7, 327991.2];
+if (labels.length > 0) {
+  const ctx = document.getElementById('equityChart').getContext('2d');
+  const gradient = ctx.createLinearGradient(0,0,0,200);
+  gradient.addColorStop(0, 'rgba(33,150,243,0.3)');
+  gradient.addColorStop(1, 'rgba(33,150,243,0)');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: '総資産 (¥)',
+        data: data,
+        borderColor: '#2196F3',
+        backgroundColor: gradient,
+        fill: true,
+        tension: 0.3,
+        pointRadius: 2,
+        pointHoverRadius: 5,
+        borderWidth: 2,
+      },{
+        label: '初期資金 (¥300,000)',
+        data: labels.map(() => 300000),
+        borderColor: '#757575',
+        borderWidth: 1,
+        borderDash: [6,3],
+        pointRadius: 0,
+        fill: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color:'#9E9E9E', font:{ size:11 }, usePointStyle:true, pointStyle:'line' } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return '¥' + ctx.parsed.y.toLocaleString(); }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color:'#757575', maxTicksLimit:8, font:{ size:10 } },
+          grid: { color:'#2A2A2A' }
+        },
+        y: {
+          ticks: {
+            color:'#757575',
+            font:{ size:10 },
+            callback: function(v) { return '¥' + v.toLocaleString(); }
+          },
+          grid: { color:'#2A2A2A' }
+        }
+      }
+    }
+  });
+} else {
+  document.getElementById('equityChart').parentElement.innerHTML =
+    '<p style="text-align:center;color:#757575;padding:24px">チャートデータがありません</p>';
+}
+
+// Sector Pie Chart
+const sectorLabels = ["\u6a5f\u68b0\u30fb\u96fb\u6a5f", "\u5316\u5b66\u30fb\u533b\u85ac", "\u98df\u54c1", "\u4e0d\u52d5\u7523\u30fb\u5009\u5eab", "\u904b\u8f38\u30fb\u901a\u4fe1\u30fb\u30b5\u30fc\u30d3\u30b9", "\u91d1\u878d\u30fb\u5546\u793e", "\u73fe\u91d1"];
+const sectorValues = [64610, 63934, 32720, 31160, 64254, 64632, 6681];
+if (sectorLabels.length > 0) {
+  const colors = ['#2196F3','#00C853','#FF9800','#9C27B0','#F44336','#00BCD4','#FF5722','#795548','#607D8B','#E91E63','#8BC34A','#FFC107'];
+  new Chart(document.getElementById('sectorChart'), {
+    type: 'doughnut',
+    data: {
+      labels: sectorLabels,
+      datasets: [{ data: sectorValues, backgroundColor: colors.slice(0, sectorLabels.length), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position:'right', labels: { color:'#9E9E9E', font:{ size:10 }, padding:8 } },
+        title: { display:true, text:'セクター配分', color:'#9E9E9E', font:{ size:12 } },
+        tooltip: { callbacks: { label: function(c) { return c.label + ': ¥' + c.parsed.toLocaleString(); } } }
+      }
+    }
+  });
+}
+
+// Monthly Performance Bar Chart
+const mLabels = ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07"];
+const mPnl = [-2080, -4250, 16880, 3255, 13553];
+const mWR = [40, 42, 83, 50, 71];
+if (mLabels.length > 0) {
+  new Chart(document.getElementById('monthlyChart'), {
+    type: 'bar',
+    data: {
+      labels: mLabels,
+      datasets: [{
+        label: '月次損益',
+        data: mPnl,
+        backgroundColor: mPnl.map(v => v >= 0 ? 'rgba(0,200,83,0.7)' : 'rgba(255,23,68,0.7)'),
+        borderRadius: 4,
+        yAxisID: 'y',
+      }, {
+        label: '勝率',
+        data: mWR,
+        type: 'line',
+        borderColor: '#64B5F6',
+        borderWidth: 2,
+        pointRadius: 3,
+        fill: false,
+        yAxisID: 'y1',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: { display:true, text:'月次パフォーマンス', color:'#9E9E9E', font:{ size:12 } },
+        legend: { labels: { color:'#9E9E9E', font:{ size:10 } } },
+        tooltip: { callbacks: { label: function(c) {
+          if (c.datasetIndex === 0) return '損益: ¥' + c.parsed.y.toLocaleString();
+          return '勝率: ' + c.parsed.y + '%';
+        } } }
+      },
+      scales: {
+        x: { ticks: { color:'#757575', font:{ size:9 } }, grid: { color:'#2A2A2A' } },
+        y: { position:'left', ticks: { color:'#757575', font:{ size:9 }, callback: v => '¥' + v.toLocaleString() }, grid: { color:'#2A2A2A' } },
+        y1: { position:'right', min:0, max:100, ticks: { color:'#64B5F6', font:{ size:9 }, callback: v => v + '%' }, grid: { display:false } }
+      }
+    }
+  });
+}
+
+// Drawdown Chart
+const ddData = [0.0, 0.0, 0.0, 0.0, 0.0, -2.15, -2.15, -2.15, -1.74, -2.12, -2.12, -2.12, -2.53, -2.53, -2.53, -2.53, -2.53, -2.53, -2.53, -3.43, -3.94, -3.94, -1.76, -1.74, -1.74, -1.74, -1.74, -0.69, -0.35, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.2, -0.2, -0.2, -0.2, -0.2, -0.2, -0.2, -1.02, -1.02, -1.02, -1.02, -2.21, -2.21, -2.24, -2.24, -2.24, -2.24, -4.55, -4.55, -4.55, -5.21, -5.98, -5.98, -5.98, -5.98, -5.98, -5.98, -3.64, -3.64, -3.64, -3.64, -2.9, -2.9, -2.9, -2.9, -2.9, -2.9, -2.9, -2.9, -2.45, -2.45, -2.45, -1.32, -1.32, -1.32, -0.79, -0.79, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.79, 0.0, 0.0, 0.0, 0.0, 0.0, -1.85, -2.28, -2.1, -3.43, -4.69, -4.69, -4.69, -2.58, -2.58, -2.16, -1.38, -1.38, -1.38, -1.38, 0.0, -0.99, -0.99, -2.06, -2.32, -2.32, -2.32, -2.32, -2.32, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.64, 0.0, -0.72, -0.72, -1.58, -1.39];
+if (labels.length > 0 && ddData.length > 0) {
+  const ddCtx = document.getElementById('ddChart').getContext('2d');
+  const ddGrad = ddCtx.createLinearGradient(0,0,0,120);
+  ddGrad.addColorStop(0, 'rgba(255,23,68,0)');
+  ddGrad.addColorStop(1, 'rgba(255,23,68,0.3)');
+  new Chart(ddCtx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{ label: 'ドローダウン (%)', data: ddData, borderColor: '#FF1744', backgroundColor: ddGrad, fill: true, tension:0.3, pointRadius:0, borderWidth:1.5 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        title: { display:true, text:'ドローダウン推移', color:'#9E9E9E', font:{ size:12 } },
+        legend: { display:false },
+        tooltip: { callbacks: { label: c => c.parsed.y.toFixed(2) + '%' } }
+      },
+      scales: {
+        x: { ticks: { color:'#757575', maxTicksLimit:8, font:{ size:9 } }, grid: { color:'#2A2A2A' } },
+        y: { ticks: { color:'#757575', font:{ size:9 }, callback: v => v + '%' }, grid: { color:'#2A2A2A' } }
+      }
+    }
+  });
+}
+
+// Scatter: Holding Period vs PnL%
+const scatterData = [{"x": 27, "y": 5.15, "name": "\u9ad8\u5cf6\u5c4b"}, {"x": 5, "y": -3.86, "name": "\u91ce\u6751\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 5, "y": -7.07, "name": "\u30df\u30cd\u30d9\u30a2\u30df\u30c4\u30df"}, {"x": 12, "y": -4.09, "name": "JFE\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 19, "y": -4.78, "name": "\u30ad\u30e4\u30ce\u30f3"}, {"x": 5, "y": -3.24, "name": "\u795e\u6238\u88fd\u92fc\u6240"}, {"x": 19, "y": -3.75, "name": "\u65e5\u672c\u88fd\u9244"}, {"x": 5, "y": -1.47, "name": "\u6771\u30bd\u30fc"}, {"x": 5, "y": -5.24, "name": "NTN"}, {"x": 5, "y": -1.18, "name": "\u4f4f\u53cb\u5316\u5b66"}, {"x": 14, "y": 3.59, "name": "\u91ce\u6751\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 22, "y": 3.32, "name": "\u30ab\u30b7\u30aa\u8a08\u7b97\u6a5f"}, {"x": 14, "y": -1.63, "name": "\u6771\u6d77\u65c5\u5ba2\u9244\u9053"}, {"x": 4, "y": -3.81, "name": "NTN"}, {"x": 14, "y": -1.31, "name": "\u5b89\u5ddd\u96fb\u6a5f"}, {"x": 14, "y": -2.26, "name": "\u795e\u6238\u88fd\u92fc\u6240"}, {"x": 3, "y": 9.56, "name": "\u5b89\u5ddd\u96fb\u6a5f"}, {"x": 11, "y": -5.12, "name": "NTN"}, {"x": 15, "y": 0.15, "name": "\u4e09\u83f1\u30b1\u30df\u30ab\u30eb\u30b0\u30eb\u30fc\u30d7"}, {"x": 77, "y": 3.35, "name": "\u4e2d\u90e8\u96fb\u529b"}, {"x": 29, "y": -0.72, "name": "\u5ddd\u5d0e\u6c7d\u8239"}, {"x": 8, "y": 1.24, "name": "\u4e09\u4e95\u7269\u7523"}, {"x": 3, "y": 0.23, "name": "\u4fe1\u8d8a\u5316\u5b66\u5de5\u696d"}, {"x": 7, "y": 3.19, "name": "\u30d1\u30ca\u30bd\u30cb\u30c3\u30af \u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 2, "y": 20.01, "name": "\u53e4\u6cb3\u96fb\u6c17\u5de5\u696d"}, {"x": 28, "y": -1.09, "name": "\u65e5\u672c\u30cf\u30e0"}, {"x": 5, "y": -7.41, "name": "\u65e5\u672c\u96fb\u6c17\u785d\u5b50"}, {"x": 3, "y": 8.56, "name": "\u4e09\u4e95\u7269\u7523"}, {"x": 31, "y": -7.8, "name": "J.\u30d5\u30ed\u30f3\u30c8 \u30ea\u30c6\u30a4\u30ea\u30f3\u30b0"}, {"x": 27, "y": 0.88, "name": "\u4e09\u8d8a\u4f0a\u52e2\u4e39\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 49, "y": 5.69, "name": "\u30ad\u30ea\u30f3\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 8, "y": 11.99, "name": "\u30d5\u30b8\u30af\u30e9"}, {"x": 23, "y": -0.59, "name": "\u4f4f\u53cb\u5316\u5b66"}, {"x": 7, "y": 10.69, "name": "\u4e09\u83f1\u30de\u30c6\u30ea\u30a2\u30eb"}, {"x": 26, "y": -3.1, "name": "\u30b3\u30f3\u30b3\u30eb\u30c7\u30a3\u30a2\u30fb\u30d5\u30a3\u30ca\u30f3\u30b7\u30e3\u30eb\u30b0\u30eb\u30fc\u30d7"}, {"x": 9, "y": 8.13, "name": "\u4e2d\u90e8\u96fb\u529b"}, {"x": 9, "y": 8.03, "name": "\u65e5\u672c\u30cf\u30e0"}, {"x": 3, "y": 8.5, "name": "\u30d5\u30b8\u30af\u30e9"}, {"x": 8, "y": 11.32, "name": "\u4e09\u8d8a\u4f0a\u52e2\u4e39\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 8, "y": 8.51, "name": "\u4f4f\u53cb\u5316\u5b66"}, {"x": 13, "y": -10.5, "name": "\u51fa\u5149\u8208\u7523"}, {"x": 2, "y": -2.32, "name": "\u4e09\u83f1\u5546\u4e8b"}, {"x": 7, "y": -8.14, "name": "\u8cc7\u751f\u5802"}, {"x": 0, "y": -0.22, "name": "\u30c7\u30f3\u30ab"}, {"x": 41, "y": 3.71, "name": "\u6771\u4eac\u6d77\u4e0a\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 9, "y": -7.11, "name": "\u30e1\u30eb\u30ab\u30ea"}, {"x": 6, "y": -13.55, "name": "\u30ed\u30fc\u30e0"}, {"x": 10, "y": -7.86, "name": "\u30ab\u30b7\u30aa\u8a08\u7b97\u6a5f"}, {"x": 10, "y": -8.0, "name": "\u30ab\u30ca\u30c7\u30d3\u30a2"}, {"x": 7, "y": -11.69, "name": "\u30d5\u30a1\u30ca\u30c3\u30af"}, {"x": 9, "y": -8.22, "name": "\u4f4f\u53cb\u5546\u4e8b"}, {"x": 11, "y": -5.62, "name": "\u30aa\u30ea\u30f3\u30d1\u30b9"}, {"x": 31, "y": 3.81, "name": "\u4e09\u83f1\u30b1\u30df\u30ab\u30eb\u30b0\u30eb\u30fc\u30d7"}, {"x": 3, "y": -2.66, "name": "\u30bd\u30b7\u30aa\u30cd\u30af\u30b9\u30c8"}, {"x": 6, "y": 7.81, "name": "\u4fe1\u8d8a\u5316\u5b66\u5de5\u696d"}, {"x": 8, "y": 9.41, "name": "\u7b2c\u4e00\u751f\u547d\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 1, "y": 12.59, "name": "\u30bd\u30b7\u30aa\u30cd\u30af\u30b9\u30c8"}, {"x": 22, "y": -0.69, "name": "\u30b8\u30fc\u30a8\u30b9\u30fb\u30e6\u30a2\u30b5 \u30b3\u30fc\u30dd\u30ec\u30fc\u30b7\u30e7\u30f3"}, {"x": 9, "y": 16.28, "name": "\u30bd\u30d5\u30c8\u30d0\u30f3\u30af\u30b0\u30eb\u30fc\u30d7"}, {"x": 33, "y": 2.69, "name": "\u4e2d\u90e8\u96fb\u529b"}, {"x": 7, "y": 7.01, "name": "\u53e4\u6cb3\u96fb\u6c17\u5de5\u696d"}, {"x": 11, "y": 16.04, "name": "\u30ec\u30be\u30ca\u30c3\u30af\u30fb\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 4, "y": 12.09, "name": "\u30d5\u30b8\u30af\u30e9"}, {"x": 13, "y": 0.02, "name": "\u30ab\u30ca\u30c7\u30d3\u30a2"}, {"x": 3, "y": 12.65, "name": "\u5bcc\u58eb\u96fb\u6a5f"}, {"x": 3, "y": 11.1, "name": "SUMCO"}, {"x": 11, "y": -4.35, "name": "\u4f4f\u53cb\u5546\u4e8b"}, {"x": 6, "y": 10.77, "name": "\u30d5\u30a1\u30ca\u30c3\u30af"}, {"x": 8, "y": -6.84, "name": "\u30c0\u30a4\u30ad\u30f3\u5de5\u696d"}, {"x": 27, "y": 10.27, "name": "\u4e2d\u90e8\u96fb\u529b"}, {"x": 8, "y": 9.71, "name": "TOTO"}, {"x": 15, "y": -6.79, "name": "\u30aa\u30ea\u30f3\u30d1\u30b9"}, {"x": 36, "y": 10.26, "name": "\u308a\u305d\u306a\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 3, "y": -2.84, "name": "\u30bb\u30a4\u30b3\u30fc\u30a8\u30d7\u30bd\u30f3"}, {"x": 14, "y": 15.32, "name": "\u4e09\u8d8a\u4f0a\u52e2\u4e39\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 3, "y": -3.14, "name": "\u30a2\u30de\u30c0"}, {"x": 1, "y": -4.83, "name": "SUMCO"}, {"x": 17, "y": -2.89, "name": "AGC"}, {"x": 25, "y": 10.27, "name": "NIPPON EXPRESS\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 11, "y": 15.11, "name": "\u30df\u30cd\u30d9\u30a2\u30df\u30c4\u30df"}, {"x": 4, "y": 10.72, "name": "TOTO"}, {"x": 33, "y": 15.35, "name": "\u4e09\u83f1UFJ\u30d5\u30a3\u30ca\u30f3\u30b7\u30e3\u30eb\u30fb\u30b0\u30eb\u30fc\u30d7"}, {"x": 11, "y": 11.27, "name": "\u30ed\u30fc\u30e0"}, {"x": 18, "y": 11.49, "name": "\u308a\u305d\u306a\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 4, "y": 11.69, "name": "\u30ed\u30fc\u30e0"}, {"x": 8, "y": -10.85, "name": "\u30bd\u30d5\u30c8\u30d0\u30f3\u30af\u30b0\u30eb\u30fc\u30d7"}, {"x": 6, "y": 10.13, "name": "\u30df\u30cd\u30d9\u30a2\u30df\u30c4\u30df"}, {"x": 10, "y": 11.91, "name": "\u4e09\u8d8a\u4f0a\u52e2\u4e39\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 9, "y": 6.0, "name": "AGC"}, {"x": 6, "y": -10.42, "name": "\u30ab\u30ca\u30c7\u30d3\u30a2"}, {"x": 15, "y": 13.21, "name": "\u30ea\u30af\u30eb\u30fc\u30c8\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 20, "y": -6.8, "name": "\u6771\u6d77\u30ab\u30fc\u30dc\u30f3"}, {"x": 6, "y": 24.64, "name": "SUMCO"}, {"x": 14, "y": -7.62, "name": "\u30cb\u30c1\u30ec\u30a4"}, {"x": 5, "y": -3.61, "name": "\u65e5\u672c\u30ac\u30a4\u30b7"}, {"x": 25, "y": 10.27, "name": "NIPPON EXPRESS\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 26, "y": 10.41, "name": "\u4e09\u83f1UFJ\u30d5\u30a3\u30ca\u30f3\u30b7\u30e3\u30eb\u30fb\u30b0\u30eb\u30fc\u30d7"}, {"x": 15, "y": 13.21, "name": "\u30ea\u30af\u30eb\u30fc\u30c8\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}, {"x": 10, "y": -8.56, "name": "\u65e5\u7523\u5316\u5b66"}, {"x": 7, "y": 11.22, "name": "\u30b5\u30c3\u30dd\u30ed\u30db\u30fc\u30eb\u30c7\u30a3\u30f3\u30b0\u30b9"}];
+if (scatterData.length > 0) {
+  new Chart(document.getElementById('scatterChart'), {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'クローズドトレード',
+        data: scatterData,
+        backgroundColor: scatterData.map(d => d.y >= 0 ? 'rgba(0,200,83,0.6)' : 'rgba(255,23,68,0.6)'),
+        pointRadius: 5,
+        pointHoverRadius: 7,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        title: { display:true, text:'保有期間 vs 損益率', color:'#9E9E9E', font:{ size:12 } },
+        legend: { display:false },
+        tooltip: { callbacks: {
+          label: function(c) {
+            const d = scatterData[c.dataIndex];
+            return d.name + ': ' + d.x + '日 / ' + (d.y >= 0 ? '+' : '') + d.y + '%';
+          }
+        } }
+      },
+      scales: {
+        x: { title: { display:true, text:'保有日数', color:'#757575', font:{ size:10 } }, ticks: { color:'#757575', font:{ size:9 } }, grid: { color:'#2A2A2A' } },
+        y: { title: { display:true, text:'損益率 (%)', color:'#757575', font:{ size:10 } }, ticks: { color:'#757575', font:{ size:9 }, callback: v => v + '%' }, grid: { color:'#2A2A2A' } }
+      }
+    }
+  });
+}
+
+// Signal Accuracy Chart (holding period buckets)
+const sigAcc = [{"bucket": "1-5d", "count": 25, "wins": 11, "win_rate": 44.0, "avg_pnl_pct": 2.6}, {"bucket": "6-10d", "count": 30, "wins": 18, "win_rate": 60.0, "avg_pnl_pct": 2.89}, {"bucket": "11-20d", "count": 24, "wins": 10, "win_rate": 41.7, "avg_pnl_pct": 1.33}, {"bucket": "21-30d", "count": 12, "wins": 7, "win_rate": 58.3, "avg_pnl_pct": 3.7}, {"bucket": "31d+", "count": 8, "wins": 7, "win_rate": 87.5, "avg_pnl_pct": 4.63}];
+if (sigAcc.some(b => b.count > 0)) {
+  new Chart(document.getElementById('sigAccChart'), {
+    type: 'bar',
+    data: {
+      labels: sigAcc.map(b => b.bucket),
+      datasets: [{
+        label: '平均損益率 (%)',
+        data: sigAcc.map(b => b.avg_pnl_pct),
+        backgroundColor: sigAcc.map(b => b.avg_pnl_pct >= 0 ? 'rgba(0,200,83,0.7)' : 'rgba(255,23,68,0.7)'),
+        borderRadius: 4,
+        yAxisID: 'y',
+      }, {
+        label: '勝率 (%)',
+        data: sigAcc.map(b => b.win_rate),
+        type: 'line',
+        borderColor: '#64B5F6',
+        borderWidth: 2,
+        pointRadius: 4,
+        fill: false,
+        yAxisID: 'y1',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        title: { display:true, text:'保有期間別 勝率 & 平均損益率', color:'#9E9E9E', font:{ size:12 } },
+        legend: { labels: { color:'#9E9E9E', font:{ size:10 } } },
+        tooltip: { callbacks: { label: function(c) {
+          const b = sigAcc[c.dataIndex];
+          if (c.datasetIndex === 0) return '平均損益: ' + b.avg_pnl_pct + '% (' + b.count + '件)';
+          return '勝率: ' + b.win_rate + '% (' + b.wins + '/' + b.count + ')';
+        } } }
+      },
+      scales: {
+        x: { ticks: { color:'#757575', font:{ size:9 } }, grid: { color:'#2A2A2A' } },
+        y: { position:'left', title: { display:true, text:'平均損益率 (%)', color:'#757575', font:{ size:9 } }, ticks: { color:'#757575', font:{ size:9 }, callback: v => v + '%' }, grid: { color:'#2A2A2A' } },
+        y1: { position:'right', min:0, max:100, title: { display:true, text:'勝率 (%)', color:'#64B5F6', font:{ size:9 } }, ticks: { color:'#64B5F6', font:{ size:9 }, callback: v => v + '%' }, grid: { display:false } }
+      }
+    }
+  });
+} else {
+  document.getElementById('sigAccChart').parentElement.innerHTML =
+    '<p style="text-align:center;color:#757575;padding:24px">クローズドトレードのデータがありません</p>';
+}
+
+// RSI Analysis Chart
+const rsiAna = [{"range": "50-55", "count": 0, "wins": 0, "win_rate": 0, "avg_pnl_pct": 0}, {"range": "55-60", "count": 3, "wins": 1, "win_rate": 33.3, "avg_pnl_pct": -1.07}, {"range": "60-65", "count": 4, "wins": 2, "win_rate": 50.0, "avg_pnl_pct": 3.56}];
+if (rsiAna.some(b => b.count > 0)) {
+  new Chart(document.getElementById('rsiChart'), {
+    type: 'bar',
+    data: {
+      labels: rsiAna.map(b => 'RSI ' + b.range),
+      datasets: [{
+        label: '勝率 (%)',
+        data: rsiAna.map(b => b.win_rate),
+        backgroundColor: '#42A5F5',
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        title: { display:true, text:'RSI レンジ別勝率', color:'#9E9E9E', font:{ size:12 } },
+        legend: { display:false },
+        tooltip: { callbacks: { label: function(c) {
+          const b = rsiAna[c.dataIndex];
+          return '勝率: ' + b.win_rate + '% (' + b.wins + '/' + b.count + '件) 平均損益: ' + b.avg_pnl_pct + '%';
+        } } }
+      },
+      scales: {
+        x: { ticks: { color:'#757575', font:{ size:9 } }, grid: { color:'#2A2A2A' } },
+        y: { min:0, max:100, ticks: { color:'#757575', font:{ size:9 }, callback: v => v + '%' }, grid: { color:'#2A2A2A' } }
+      },
+      plugins_datalabels: false,
+    }
+  });
+  // Add count labels on top of bars
+  const rsiCanvas = document.getElementById('rsiChart');
+  const rsiChartInst = Chart.getChart(rsiCanvas);
+  if (rsiChartInst) {
+    const origDraw = rsiChartInst.draw.bind(rsiChartInst);
+    rsiChartInst.draw = function() {
+      origDraw();
+      const ctx = rsiCanvas.getContext('2d');
+      const meta = rsiChartInst.getDatasetMeta(0);
+      ctx.fillStyle = '#9E9E9E';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      meta.data.forEach((bar, i) => {
+        ctx.fillText(rsiAna[i].count + '件', bar.x, bar.y - 6);
+      });
+    };
+    rsiChartInst.draw();
+  }
+} else {
+  document.getElementById('rsiChart').parentElement.innerHTML =
+    '<p style="text-align:center;color:#757575;padding:24px">RSIデータがありません（execution_historyとのマッチなし）</p>';
+}
+</script>
+</body>
+</html>

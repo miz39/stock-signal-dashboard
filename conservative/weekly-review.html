@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>週次振り返りレポート（2026-03-30 〜 2026-04-04）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#121212; color:#E0E0E0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; padding:16px; max-width:960px; margin:0 auto; }
+a.back { color:#64B5F6; text-decoration:none; font-size:0.85rem; display:inline-block; margin-bottom:12px; }
+a.back:hover { text-decoration:underline; }
+h1 { font-size:1.3rem; margin-bottom:4px; }
+.subtitle { font-size:0.85rem; color:#9E9E9E; margin-bottom:4px; }
+.updated { font-size:0.75rem; color:#757575; margin-bottom:20px; }
+.section { margin-bottom:24px; }
+.section h2 { font-size:1rem; margin-bottom:10px; padding-bottom:4px; border-bottom:1px solid #333; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:20px; }
+.card { background:#1E1E1E; border-radius:10px; padding:14px; text-align:center; }
+.card .label { font-size:0.7rem; color:#9E9E9E; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; }
+.card .value { font-size:1.4rem; font-weight:700; }
+.card .sub { font-size:0.7rem; color:#757575; margin-top:2px; }
+.green { color:#00C853; }
+.red { color:#FF1744; }
+
+.bw-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.bw-card { background:#1E1E1E; border-radius:10px; padding:16px; border-left:4px solid #757575; }
+.bw-label { font-size:0.7rem; color:#9E9E9E; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
+.bw-name { font-size:1rem; font-weight:700; margin-bottom:4px; }
+.bw-pnl { font-size:1.2rem; font-weight:700; margin-bottom:6px; }
+.bw-detail { font-size:0.8rem; color:#B0BEC5; }
+.bw-meta { font-size:0.75rem; color:#64B5F6; margin-top:6px; }
+.bw-reason { font-size:0.72rem; color:#757575; margin-top:4px; padding:4px 8px; background:#262626; border-radius:4px; }
+.bw-empty { color:#757575; font-size:0.85rem; }
+
+.stop-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; }
+.stop-card { background:#1E1E1E; border-radius:10px; padding:14px; text-align:center; }
+.stop-card .label { font-size:0.7rem; color:#9E9E9E; margin-bottom:4px; }
+.stop-card .value { font-size:1.3rem; font-weight:700; }
+.stop-card .sub { font-size:0.7rem; color:#757575; margin-top:2px; }
+.saved { color:#64B5F6; }
+
+.hint-box { background:#1B2A1B; border:1px solid #2E7D32; border-radius:10px; padding:16px; font-size:0.88rem; line-height:1.6; color:#C8E6C9; }
+
+.action-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:10px; }
+.action-card { background:#1E1E1E; border-radius:10px; padding:12px; text-align:center; }
+.action-card .label { font-size:0.65rem; color:#9E9E9E; margin-bottom:4px; text-transform:uppercase; }
+.action-card .value { font-size:1.2rem; font-weight:700; }
+
+table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+th { background:#1E1E1E; color:#9E9E9E; text-align:left; padding:8px 6px; font-weight:500; font-size:0.7rem; text-transform:uppercase; position:sticky; top:0; }
+td { padding:8px 6px; border-bottom:1px solid #2A2A2A; }
+td.num { text-align:right; font-variant-numeric:tabular-nums; }
+.ticker { color:#757575; font-size:0.7rem; }
+.small { font-size:0.7rem; }
+.empty { text-align:center; color:#757575; padding:24px; }
+
+@media(max-width:480px) {
+  .cards { grid-template-columns:repeat(2,1fr); }
+  .card .value { font-size:1.2rem; }
+  .bw-grid { grid-template-columns:1fr; }
+  .stop-grid { grid-template-columns:repeat(2,1fr); }
+  table { font-size:0.75rem; }
+  td, th { padding:6px 4px; }
+}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; Dashboard</a>
+<h1>週次振り返りレポート</h1>
+<div class="subtitle">2026-03-30 〜 2026-04-04</div>
+<div class="updated">生成: 2026-04-04 00:45 JST</div>
+
+<!-- 1. 今週のサマリー -->
+<div class="section">
+  <h2>今週のサマリー</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="label">週間損益</div>
+      <div class="value" style="color:#9E9E9E">&yen;0</div>
+    </div>
+    <div class="card">
+      <div class="label">勝率</div>
+      <div class="value">0%</div>
+      <div class="sub">0勝0敗</div>
+    </div>
+    <div class="card">
+      <div class="label">トレード数</div>
+      <div class="value">0</div>
+    </div>
+    <div class="card">
+      <div class="label">全期間勝率</div>
+      <div class="value">0%</div>
+      <div class="sub">全0件</div>
+    </div>
+    <div class="card">
+      <div class="label">全期間損益</div>
+      <div class="value" style="color:#9E9E9E">&yen;0</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. ベスト & ワースト -->
+<div class="section">
+  <h2>ベスト &amp; ワースト</h2>
+  <div class="bw-grid">
+    <div class="bw-card" style="border-left-color:#00C853"><div class="bw-label">ベストトレード</div><div class="bw-empty">該当なし</div></div>
+    <div class="bw-card" style="border-left-color:#FF1744"><div class="bw-label">ワーストトレード</div><div class="bw-empty">該当なし</div></div>
+  </div>
+</div>
+
+<!-- 3. 損切りレビュー -->
+<div class="section">
+  <h2>損切りレビュー</h2>
+  <div class="stop-grid">
+    <div class="stop-card">
+      <div class="label">ストップ発動</div>
+      <div class="value">0回</div>
+    </div>
+    <div class="stop-card">
+      <div class="label">平均損失</div>
+      <div class="value red">&yen;0</div>
+    </div>
+    <div class="stop-card">
+      <div class="label">ストップ損失合計</div>
+      <div class="value red">&yen;0</div>
+    </div>
+    <div class="stop-card">
+      <div class="label">ストップなし推定損失</div>
+      <div class="value red">&yen;0</div>
+    </div>
+    <div class="stop-card">
+      <div class="label">ストップで回避</div>
+      <div class="value saved">&yen;0</div>
+      <div class="sub">推定回避額</div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. 戦略の答え合わせ -->
+<div class="section">
+  <h2>戦略の答え合わせ</h2>
+  <div class="action-grid">
+    <div class="action-card">
+      <div class="label">スキャン銘柄</div>
+      <div class="value">0</div>
+    </div>
+    <div class="action-card">
+      <div class="label">新規エントリー</div>
+      <div class="value">0</div>
+    </div>
+    <div class="action-card">
+      <div class="label">全売却</div>
+      <div class="value">0</div>
+    </div>
+    <div class="action-card">
+      <div class="label">利確</div>
+      <div class="value">0</div>
+    </div>
+    <div class="action-card">
+      <div class="label">ストップ更新</div>
+      <div class="value">0</div>
+    </div>
+  </div>
+  <div style="overflow-x:auto; margin-top:12px">
+  <table>
+    <thead><tr><th>銘柄</th><th>取得</th><th>売却</th><th>損益</th><th>RSI</th></tr></thead>
+    <tbody><tr><td colspan="5" class="empty">今週のクローズドトレードはありません</td></tr></tbody>
+  </table>
+  </div>
+</div>
+
+<!-- 5. 来週のヒント -->
+<div class="section">
+  <h2>来週のヒント</h2>
+  <div class="hint-box">
+    今週はクローズしたトレードがありません。来週のシグナルを待ちましょう。
+  </div>
+</div>
+
+</body>
+</html>

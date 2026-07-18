@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Valuation Analysis</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Helvetica Neue',Arial,sans-serif; background:#121212; color:#E0E0E0; padding:16px; }
+h1 { font-size:1.5rem; margin-bottom:4px; }
+.updated { color:#757575; font-size:0.8rem; margin-bottom:16px; }
+.updated a { color:#64B5F6; text-decoration:none; }
+.updated a:hover { text-decoration:underline; }
+
+.summary-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+.summary-card { background:#1E1E1E; border-radius:10px; padding:16px; text-align:center; }
+.summary-card .label { color:#9E9E9E; font-size:0.75rem; margin-bottom:4px; }
+.summary-card .value { font-size:1.8rem; font-weight:700; }
+
+.section { background:#1E1E1E; border-radius:10px; padding:16px; margin-bottom:16px; }
+.section-title { font-size:1rem; font-weight:600; margin-bottom:12px; color:#E0E0E0; }
+
+table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+th { text-align:left; padding:8px 6px; border-bottom:2px solid #333; color:#9E9E9E; font-weight:500; cursor:pointer; }
+th:hover { color:#64B5F6; }
+td { padding:8px 6px; border-bottom:1px solid #2A2A2A; }
+td.num { text-align:right; font-variant-numeric:tabular-nums; }
+.data-row { cursor:pointer; transition:background 0.15s; }
+.data-row:hover { background:#2A2A2A; }
+.data-row.selected { background:#1A237E; }
+.green { color:#00C853; }
+.red { color:#FF1744; }
+
+.charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+.chart-wrap { background:#1E1E1E; border-radius:10px; padding:16px; }
+.chart-wrap canvas { max-height:300px; }
+
+.heatmap { display:grid; gap:2px; margin-top:8px; }
+.heatmap-row { display:flex; gap:2px; align-items:center; }
+.heatmap-label { width:60px; font-size:0.7rem; color:#9E9E9E; text-align:right; padding-right:6px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.heatmap-cell { flex:1; height:28px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:600; }
+.heatmap-header { display:flex; gap:2px; margin-left:62px; margin-bottom:4px; }
+.heatmap-header span { flex:1; text-align:center; font-size:0.65rem; color:#9E9E9E; }
+
+.detail-panel { background:#1E1E1E; border-radius:10px; padding:16px; margin-bottom:16px; display:none; }
+.detail-panel.active { display:block; }
+.detail-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.detail-title { font-size:1.1rem; font-weight:600; }
+.signal-badge { padding:4px 10px; border-radius:4px; font-size:0.75rem; font-weight:600; }
+.signal-badge.strong_buy { background:#00C853; color:#000; }
+.signal-badge.buy { background:#4CAF50; color:#000; }
+.signal-badge.hold { background:#FF9800; color:#000; }
+.signal-badge.sell { background:#FF5722; color:#fff; }
+.signal-badge.strong_sell { background:#FF1744; color:#fff; }
+.agent-cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; margin-top:12px; }
+.agent-card { background:#252525; border-radius:8px; padding:12px; border-left:3px solid #333; }
+.agent-card .a-name { font-size:0.75rem; color:#9E9E9E; margin-bottom:4px; }
+.agent-card .a-score { font-size:1.2rem; font-weight:700; margin-bottom:4px; }
+.agent-card .a-reason { font-size:0.72rem; color:#BDBDBD; line-height:1.4; }
+.reasons-list { margin-top:12px; }
+.reasons-list li { font-size:0.78rem; color:#BDBDBD; line-height:1.6; margin-bottom:4px; }
+
+@media(max-width:768px) {
+  .summary-cards { grid-template-columns:1fr; }
+  .charts-grid { grid-template-columns:1fr; }
+  .agent-cards { grid-template-columns:1fr; }
+  table { font-size:0.7rem; }
+  td, th { padding:6px 3px; }
+}
+</style>
+</head>
+<body>
+<h1>AI Valuation Analysis</h1>
+<div class="updated">最終更新: 2026-07-18 13:56 JST &nbsp;|&nbsp; スキャン: 2026-07-17 16:31 &nbsp;|&nbsp; <a href="index.html">&larr; Dashboard</a></div>
+
+<div class="summary-cards">
+  <div class="summary-card">
+    <div class="label">分析銘柄数</div>
+    <div class="value">15</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">割安判定</div>
+    <div class="value" style="color:#00C853">7</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">STRONG BUY</div>
+    <div class="value" style="color:#64B5F6">4</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">バリュエーション分析テーブル <small style="color:#757575">（ヘッダークリックでソート / 行クリックで詳細）</small></div>
+  <div style="overflow-x:auto">
+  <table id="analysisTable">
+    <thead>
+      <tr>
+        <th data-col="0">銘柄</th>
+        <th data-col="1">種別</th>
+        <th data-col="2">株価</th>
+        <th data-col="3">判定</th>
+        <th data-col="4">Score</th>
+        <th data-col="5">Confidence</th>
+        <th data-col="6">理論株価</th>
+        <th data-col="7">乖離率</th>
+      </tr>
+    </thead>
+    <tbody>
+<tr class="data-row" data-idx="0" onclick="selectRow(0)">
+  <td>三井住友トラスト・ホールディングス<br><small style="color:#757575">8309.T</small></td>
+  <td><span style="color:#64B5F6;font-size:0.7rem">BUY候補</span></td>
+  <td class="num">&yen;6,450</td>
+  <td class="green">大幅割安</td>
+  <td class="num">+1.02</td>
+  <td class="num">77%</td>
+  <td class="num">&yen;28,212</td>
+  <td class="green">+337.4%</td>
+</tr><tr class="data-row" data-idx="1" onclick="selectRow(1)">
+  <td>三菱UFJフィナンシャル・グループ<br><small style="color:#757575">8306.T</small></td>
+  <td><span style="color:#64B5F6;font-size:0.7rem">BUY候補</span></td>
+  <td class="num">&yen;3,473</td>
+  <td class="green">割安</td>
+  <td class="num">+0.72</td>
+  <td class="num">73%</td>
+  <td class="num">&yen;24,131</td>
+  <td class="green">+594.8%</td>
+</tr><tr class="data-row" data-idx="2" onclick="selectRow(2)">
+  <td>三井住友フィナンシャルグループ<br><small style="color:#757575">8316.T</small></td>
+  <td><span style="color:#64B5F6;font-size:0.7rem">BUY候補</span></td>
+  <td class="num">&yen;6,721</td>
+  <td class="green">割安</td>
+  <td class="num">+0.72</td>
+  <td class="num">73%</td>
+  <td class="num">&yen;31,514</td>
+  <td class="green">+368.9%</td>
+</tr><tr class="data-row" data-idx="3" onclick="selectRow(3)">
+  <td>野村ホールディングス<br><small style="color:#757575">8604.T</small></td>
+  <td><span style="color:#64B5F6;font-size:0.7rem">BUY候補</span></td>
+  <td class="num">&yen;1,520</td>
+  <td class="">割高</td>
+  <td class="num">-0.44</td>
+  <td class="num">53%</td>
+  <td class="num">-</td>
+  <td class="">-</td>
+</tr><tr class="data-row" data-idx="4" onclick="selectRow(4)">
+  <td>大和証券グループ本社<br><small style="color:#757575">8601.T</small></td>
+  <td><span style="color:#64B5F6;font-size:0.7rem">BUY候補</span></td>
+  <td class="num">&yen;1,780</td>
+  <td class="">適正</td>
+  <td class="num">+0.15</td>
+  <td class="num">73%</td>
+  <td class="num">&yen;1,742</td>
+  <td class="red">-2.1%</td>
+</tr><tr class="data-row" data-idx="5" onclick="selectRow(5)">
+  <td>NIPPON EXPRESSホールディングス<br><small style="color:#757575">9147.T</small></td>
+  <td><span style="color:#64B5F6;font-size:0.7rem">BUY候補</span></td>
+  <td class="num">&yen;5,385</td>
+  <td class="">割高</td>
+  <td class="num">-0.34</td>
+  <td class="num">94%</td>
+  <td class="num">&yen;5,029</td>
+  <td class="red">-6.6%</td>
+</tr><tr class="data-row" data-idx="6" onclick="selectRow(6)">
+  <td>メルカリ<br><small style="color:#757575">4385.T</small></td>
+  <td><span style="color:#64B5F6;font-size:0.7rem">BUY候補</span></td>
+  <td class="num">&yen;4,616</td>
+  <td class="red">割高</td>
+  <td class="num">-0.72</td>
+  <td class="num">71%</td>
+  <td class="num">-</td>
+  <td class="">-</td>
+</tr><tr class="data-row" data-idx="7" onclick="selectRow(7)">
+  <td>協和キリン<br><small style="color:#757575">4151.T</small></td>
+  <td><span style="color:#64B5F6;font-size:0.7rem">BUY候補</span></td>
+  <td class="num">&yen;2,654</td>
+  <td class="">適正</td>
+  <td class="num">-0.29</td>
+  <td class="num">91%</td>
+  <td class="num">&yen;713</td>
+  <td class="red">-73.1%</td>
+</tr><tr class="data-row" data-idx="8" onclick="selectRow(8)">
+  <td>第一生命ホールディングス<br><small style="color:#757575">8750.T</small></td>
+  <td><span style="color:#64B5F6;font-size:0.7rem">BUY候補</span></td>
+  <td class="num">&yen;1,799</td>
+  <td class="green">割安</td>
+  <td class="num">+0.92</td>
+  <td class="num">91%</td>
+  <td class="num">&yen;2,444</td>
+  <td class="green">+35.8%</td>
+</tr><tr class="data-row" data-idx="9" onclick="selectRow(9)">
+  <td>日本郵政<br><small style="color:#757575">6178.T</small></td>
+  <td><span style="color:#FF9800;font-size:0.7rem">保有中</span></td>
+  <td class="num">&yen;2,329</td>
+  <td class="green">大幅割安</td>
+  <td class="num">+1.07</td>
+  <td class="num">71%</td>
+  <td class="num">&yen;31,727</td>
+  <td class="green">+1262.3%</td>
+</tr><tr class="data-row" data-idx="10" onclick="selectRow(10)">
+  <td>UBE<br><small style="color:#757575">4208.T</small></td>
+  <td><span style="color:#FF9800;font-size:0.7rem">保有中</span></td>
+  <td class="num">&yen;3,208</td>
+  <td class="">割高</td>
+  <td class="num">-0.35</td>
+  <td class="num">85%</td>
+  <td class="num">&yen;1,057</td>
+  <td class="red">-67.0%</td>
+</tr><tr class="data-row" data-idx="11" onclick="selectRow(11)">
+  <td>サッポロホールディングス<br><small style="color:#757575">2501.T</small></td>
+  <td><span style="color:#FF9800;font-size:0.7rem">保有中</span></td>
+  <td class="num">&yen;2,045</td>
+  <td class="">適正</td>
+  <td class="num">-0.05</td>
+  <td class="num">91%</td>
+  <td class="num">&yen;2,223</td>
+  <td class="green">+8.7%</td>
+</tr><tr class="data-row" data-idx="12" onclick="selectRow(12)">
+  <td>三越伊勢丹ホールディングス<br><small style="color:#757575">3099.T</small></td>
+  <td><span style="color:#FF9800;font-size:0.7rem">保有中</span></td>
+  <td class="num">&yen;3,895</td>
+  <td class="green">大幅割安</td>
+  <td class="num">+1.07</td>
+  <td class="num">94%</td>
+  <td class="num">&yen;5,757</td>
+  <td class="green">+47.8%</td>
+</tr><tr class="data-row" data-idx="13" onclick="selectRow(13)">
+  <td>京セラ<br><small style="color:#757575">6971.T</small></td>
+  <td><span style="color:#FF9800;font-size:0.7rem">保有中</span></td>
+  <td class="num">&yen;3,556</td>
+  <td class="red">割高</td>
+  <td class="num">-0.67</td>
+  <td class="num">91%</td>
+  <td class="num">&yen;512</td>
+  <td class="red">-85.6%</td>
+</tr><tr class="data-row" data-idx="14" onclick="selectRow(14)">
+  <td>日本航空<br><small style="color:#757575">9201.T</small></td>
+  <td><span style="color:#FF9800;font-size:0.7rem">保有中</span></td>
+  <td class="num">&yen;2,904</td>
+  <td class="green">大幅割安</td>
+  <td class="num">+1.27</td>
+  <td class="num">94%</td>
+  <td class="num">&yen;21,633</td>
+  <td class="green">+644.9%</td>
+</tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="charts-grid">
+  <div class="chart-wrap">
+    <div class="section-title">Valuation Agent Scores (Radar)</div>
+    <canvas id="radarChart"></canvas>
+  </div>
+  <div class="chart-wrap">
+    <div class="section-title">Agent Score Heatmap</div>
+    <div id="heatmapContainer"></div>
+  </div>
+</div>
+
+<div class="detail-panel" id="detailPanel">
+  <div class="detail-header">
+    <div class="detail-title" id="detailTitle">-</div>
+    <div class="signal-badge" id="detailBadge">-</div>
+  </div>
+  <div id="detailContent"></div>
+</div>
+
+<script>
+const SIGNALS = [{"ticker": "8309.T", "name": "三井住友トラスト・ホールディングス", "price": 6450.0, "category": "BUY候補", "signal": "大幅割安", "score": 1.02, "confidence": 77, "fair_value": 28212.0, "upside_pct": 337.4, "agents": [{"agent": "DCF", "score": 2.0, "confidence": 83, "reasons": ["理論株価 ¥28,212 vs 現在 ¥6,450（+337.4%）", "WACC 8.0%, 永続成長率 1.5%"], "fair_value": 28212.0, "upside_pct": 337.4}, {"agent": "三表財務", "score": 0.5, "confidence": 87, "reasons": ["売上成長率 平均+11.3% → 高成長", "自己資本比率 4.3% → やや低い"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": 0.5, "confidence": 100, "reasons": ["PER 14.3 → セクター中央値16.2対比 -11.7% やや割安"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.0, "confidence": 0, "reasons": ["分析に必要なデータが不足しています"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": 2.0, "confidence": 100, "reasons": ["Bull ¥43,192 / Base ¥28,212 / Bear ¥22,639", "現在株価 ¥6,450 → 9/9 シナリオで割安"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】理論株価 ¥28,212 vs 現在 ¥6,450（+337.4%）", "【三表財務】売上成長率 平均+11.3% → 高成長", "【類似企業比較】PER 14.3 → セクター中央値16.2対比 -11.7% やや割安", "【オペレーティング】分析に必要なデータが不足しています", "【感応度】Bull ¥43,192 / Base ¥28,212 / Bear ¥22,639"]}, {"ticker": "8306.T", "name": "三菱UFJフィナンシャル・グループ", "price": 3473.0, "category": "BUY候補", "signal": "割安", "score": 0.72, "confidence": 73, "fair_value": 24131.0, "upside_pct": 594.8, "agents": [{"agent": "DCF", "score": 2.0, "confidence": 70, "reasons": ["理論株価 ¥24,131 vs 現在 ¥3,473（+594.8%）", "WACC 8.0%, 永続成長率 1.5%"], "fair_value": 24131.0, "upside_pct": 594.8}, {"agent": "三表財務", "score": -0.4, "confidence": 87, "reasons": ["売上成長率 平均+7.8%", "自己資本比率 5.2% → やや低い"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": 0.0, "confidence": 100, "reasons": ["PER 16.4 → セクター中央値15.9と同水準"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.0, "confidence": 0, "reasons": ["分析に必要なデータが不足しています"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": 2.0, "confidence": 100, "reasons": ["Bull ¥39,491 / Base ¥24,131 / Bear ¥18,435", "現在株価 ¥3,473 → 9/9 シナリオで割安"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】理論株価 ¥24,131 vs 現在 ¥3,473（+594.8%）", "【三表財務】売上成長率 平均+7.8%", "【類似企業比較】PER 16.4 → セクター中央値15.9と同水準", "【オペレーティング】分析に必要なデータが不足しています", "【感応度】Bull ¥39,491 / Base ¥24,131 / Bear ¥18,435"]}, {"ticker": "8316.T", "name": "三井住友フィナンシャルグループ", "price": 6721.0, "category": "BUY候補", "signal": "割安", "score": 0.72, "confidence": 73, "fair_value": 31514.0, "upside_pct": 368.9, "agents": [{"agent": "DCF", "score": 2.0, "confidence": 70, "reasons": ["理論株価 ¥31,514 vs 現在 ¥6,721（+368.9%）", "WACC 8.0%, 永続成長率 1.5%"], "fair_value": 31514.0, "upside_pct": 368.9}, {"agent": "三表財務", "score": -0.4, "confidence": 87, "reasons": ["売上成長率 平均+15.9% → 高成長", "自己資本比率 4.8% → やや低い"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": 0.0, "confidence": 100, "reasons": ["PER 16.3 → セクター中央値15.9と同水準"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.0, "confidence": 0, "reasons": ["分析に必要なデータが不足しています"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": 2.0, "confidence": 100, "reasons": ["Bull ¥49,168 / Base ¥31,514 / Bear ¥25,000", "現在株価 ¥6,721 → 9/9 シナリオで割安"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】理論株価 ¥31,514 vs 現在 ¥6,721（+368.9%）", "【三表財務】売上成長率 平均+15.9% → 高成長", "【類似企業比較】PER 16.3 → セクター中央値15.9と同水準", "【オペレーティング】分析に必要なデータが不足しています", "【感応度】Bull ¥49,168 / Base ¥31,514 / Bear ¥25,000"]}, {"ticker": "8604.T", "name": "野村ホールディングス", "price": 1520.0, "category": "BUY候補", "signal": "割高", "score": -0.44, "confidence": 53, "fair_value": null, "upside_pct": null, "agents": [{"agent": "DCF", "score": -1.0, "confidence": 30, "reasons": ["FCF がマイナス → DCF 算出不可"], "fair_value": null, "upside_pct": null}, {"agent": "三表財務", "score": -0.8, "confidence": 87, "reasons": ["売上成長率 平均+17.3% → 高成長", "自己資本比率 5.9% → やや低い"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": 0.5, "confidence": 100, "reasons": ["PER 12.8 → セクター中央値16.2対比 -21.1% やや割安"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.0, "confidence": 0, "reasons": ["分析に必要なデータが不足しています"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": -1.0, "confidence": 20, "reasons": ["FCF がマイナスのため感応度分析不可"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】FCF がマイナス → DCF 算出不可", "【三表財務】売上成長率 平均+17.3% → 高成長", "【類似企業比較】PER 12.8 → セクター中央値16.2対比 -21.1% やや割安", "【オペレーティング】分析に必要なデータが不足しています", "【感応度】FCF がマイナスのため感応度分析不可"]}, {"ticker": "8601.T", "name": "大和証券グループ本社", "price": 1779.5, "category": "BUY候補", "signal": "適正", "score": 0.15, "confidence": 73, "fair_value": 1742.0, "upside_pct": -2.1, "agents": [{"agent": "DCF", "score": 0.0, "confidence": 70, "reasons": ["理論株価 ¥1,742 vs 現在 ¥1,780（-2.1%）", "WACC 8.0%, 永続成長率 1.5%"], "fair_value": 1742.0, "upside_pct": -2.1}, {"agent": "三表財務", "score": 0.1, "confidence": 87, "reasons": ["売上成長率 平均+14.0% → 高成長", "自己資本比率 4.6% → やや低い"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": 0.5, "confidence": 100, "reasons": ["PER 14.3 → セクター中央値16.2対比 -11.4% やや割安"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.0, "confidence": 0, "reasons": ["分析に必要なデータが不足しています"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": 0.0, "confidence": 100, "reasons": ["Bull ¥3,839 / Base ¥1,742 / Bear ¥962", "現在株価 ¥1,780 → 4/9 シナリオで割安"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】理論株価 ¥1,742 vs 現在 ¥1,780（-2.1%）", "【三表財務】売上成長率 平均+14.0% → 高成長", "【類似企業比較】PER 14.3 → セクター中央値16.2対比 -11.4% やや割安", "【オペレーティング】分析に必要なデータが不足しています", "【感応度】Bull ¥3,839 / Base ¥1,742 / Bear ¥962"]}, {"ticker": "9147.T", "name": "NIPPON EXPRESSホールディングス", "price": 5385.0, "category": "BUY候補", "signal": "割高", "score": -0.34, "confidence": 94, "fair_value": 5029.0, "upside_pct": -6.6, "agents": [{"agent": "DCF", "score": 0.0, "confidence": 80, "reasons": ["理論株価 ¥5,029 vs 現在 ¥5,385（-6.6%）", "WACC 8.0%, 永続成長率 1.5%"], "fair_value": 5029.0, "upside_pct": -6.6}, {"agent": "三表財務", "score": 0.1, "confidence": 100, "reasons": ["営業利益率 2.0% → 低収益", "営業利益率 悪化傾向"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": -1.5, "confidence": 100, "reasons": ["PER 495.9 → セクター中央値12.4対比 +3912.1% 割高", "PBR 1.58 → セクター中央値1.12対比 +41.2% 割高"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.1, "confidence": 100, "reasons": ["ROIC 1.8% → WACC 割れの可能性", "マージン安定性 σ=1.7pp → 高い安定性"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": 0.0, "confidence": 100, "reasons": ["Bull ¥10,735 / Base ¥5,029 / Bear ¥2,905", "現在株価 ¥5,385 → 4/9 シナリオで割安"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】理論株価 ¥5,029 vs 現在 ¥5,385（-6.6%）", "【三表財務】営業利益率 2.0% → 低収益", "【類似企業比較】PER 495.9 → セクター中央値12.4対比 +3912.1% 割高", "【オペレーティング】ROIC 1.8% → WACC 割れの可能性", "【感応度】Bull ¥10,735 / Base ¥5,029 / Bear ¥2,905"]}, {"ticker": "4385.T", "name": "メルカリ", "price": 4616.0, "category": "BUY候補", "signal": "割高", "score": -0.72, "confidence": 71, "fair_value": null, "upside_pct": null, "agents": [{"agent": "DCF", "score": -1.0, "confidence": 30, "reasons": ["FCF がマイナス → DCF 算出不可"], "fair_value": null, "upside_pct": null}, {"agent": "三表財務", "score": -0.9, "confidence": 100, "reasons": ["売上成長率 平均+9.6%", "営業利益率 改善傾向"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": -1.0, "confidence": 100, "reasons": ["PER 26.6 → セクター中央値20.5対比 +29.6% やや割高", "PBR 6.34 → セクター中央値1.90対比 +234.3% 割高"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.7, "confidence": 100, "reasons": ["ROIC 17.2% → 高い資本効率", "営業レバレッジ 21.2x → 増収時の利益拡大効果大"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": -1.0, "confidence": 20, "reasons": ["FCF がマイナスのため感応度分析不可"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】FCF がマイナス → DCF 算出不可", "【三表財務】売上成長率 平均+9.6%", "【類似企業比較】PER 26.6 → セクター中央値20.5対比 +29.6% やや割高", "【オペレーティング】ROIC 17.2% → 高い資本効率", "【感応度】FCF がマイナスのため感応度分析不可"]}, {"ticker": "4151.T", "name": "協和キリン", "price": 2654.5, "category": "BUY候補", "signal": "適正", "score": -0.29, "confidence": 91, "fair_value": 713.0, "upside_pct": -73.1, "agents": [{"agent": "DCF", "score": -2.0, "confidence": 70, "reasons": ["理論株価 ¥713 vs 現在 ¥2,654（-73.1%）", "WACC 9.0%, 永続成長率 1.5%"], "fair_value": 713.0, "upside_pct": -73.1}, {"agent": "三表財務", "score": 1.6, "confidence": 100, "reasons": ["売上成長率 平均+7.8%", "営業利益率 20.6% → 高収益"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": 0.0, "confidence": 100, "reasons": ["PER 20.7 → セクター中央値20.5と同水準"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.9, "confidence": 100, "reasons": ["ROIC 11.7% → 平均的", "営業レバレッジ 44.3x → 増収時の利益拡大効果大"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": -1.5, "confidence": 100, "reasons": ["Bull ¥908 / Base ¥713 / Bear ¥629", "現在株価 ¥2,654 → 0/9 シナリオで割安"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】理論株価 ¥713 vs 現在 ¥2,654（-73.1%）", "【三表財務】売上成長率 平均+7.8%", "【類似企業比較】PER 20.7 → セクター中央値20.5と同水準", "【オペレーティング】ROIC 11.7% → 平均的", "【感応度】Bull ¥908 / Base ¥713 / Bear ¥629"]}, {"ticker": "8750.T", "name": "第一生命ホールディングス", "price": 1799.0, "category": "BUY候補", "signal": "割安", "score": 0.92, "confidence": 91, "fair_value": 2444.0, "upside_pct": 35.8, "agents": [{"agent": "DCF", "score": 2.0, "confidence": 70, "reasons": ["理論株価 ¥2,444 vs 現在 ¥1,799（+35.8%）", "WACC 8.0%, 永続成長率 1.5%"], "fair_value": 2444.0, "upside_pct": 35.8}, {"agent": "三表財務", "score": 0.5, "confidence": 100, "reasons": ["売上成長率 平均+9.0%", "営業利益率 改善傾向"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": 0.0, "confidence": 100, "reasons": ["PER 14.8 → セクター中央値16.2と同水準"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.5, "confidence": 100, "reasons": ["ROIC 13.2% → 平均的", "マージン安定性 σ=1.5pp → 高い安定性"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": 1.5, "confidence": 100, "reasons": ["Bull ¥4,181 / Base ¥2,444 / Bear ¥1,798", "現在株価 ¥1,799 → 8/9 シナリオで割安"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】理論株価 ¥2,444 vs 現在 ¥1,799（+35.8%）", "【三表財務】売上成長率 平均+9.0%", "【類似企業比較】PER 14.8 → セクター中央値16.2と同水準", "【オペレーティング】ROIC 13.2% → 平均的", "【感応度】Bull ¥4,181 / Base ¥2,444 / Bear ¥1,798"]}, {"ticker": "6178.T", "name": "日本郵政", "price": 2329.0, "category": "保有中", "signal": "大幅割安", "score": 1.07, "confidence": 71, "fair_value": 31727.0, "upside_pct": 1262.3, "agents": [{"agent": "DCF", "score": 2.0, "confidence": 70, "reasons": ["理論株価 ¥31,727 vs 現在 ¥2,329（+1262.3%）", "WACC 9.0%, 永続成長率 1.5%"], "fair_value": 31727.0, "upside_pct": 1262.3}, {"agent": "三表財務", "score": 0.1, "confidence": 75, "reasons": ["自己資本比率 3.1% → やや低い", "D/E レシオ 0.38 → 低負債"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": 1.0, "confidence": 100, "reasons": ["PER 18.0 → セクター中央値24.8対比 -27.3% やや割安", "PBR 0.67 → セクター中央値1.87対比 -64.1% 割安"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.0, "confidence": 0, "reasons": ["分析に必要なデータが不足しています"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": 2.0, "confidence": 100, "reasons": ["Bull ¥36,991 / Base ¥31,727 / Bear ¥29,445", "現在株価 ¥2,329 → 9/9 シナリオで割安"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】理論株価 ¥31,727 vs 現在 ¥2,329（+1262.3%）", "【三表財務】自己資本比率 3.1% → やや低い", "【類似企業比較】PER 18.0 → セクター中央値24.8対比 -27.3% やや割安", "【オペレーティング】分析に必要なデータが不足しています", "【感応度】Bull ¥36,991 / Base ¥31,727 / Bear ¥29,445"]}, {"ticker": "4208.T", "name": "UBE", "price": 3208.0, "category": "保有中", "signal": "割高", "score": -0.35, "confidence": 85, "fair_value": 1057.0, "upside_pct": -67.0, "agents": [{"agent": "DCF", "score": -2.0, "confidence": 70, "reasons": ["理論株価 ¥1,057 vs 現在 ¥3,208（-67.0%）", "WACC 9.0%, 永続成長率 1.5%"], "fair_value": 1057.0, "upside_pct": -67.0}, {"agent": "三表財務", "score": -0.6, "confidence": 100, "reasons": ["売上成長率 平均-8.6% → 減収傾向", "営業利益率 悪化傾向"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": 2.0, "confidence": 100, "reasons": ["PER 13.0 → セクター中央値20.7対比 -36.9% 割安", "PBR 0.71 → セクター中央値2.02対比 -64.7% 割安"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.1, "confidence": 66, "reasons": ["ROIC 2.1% → WACC 割れの可能性", "マージン安定性 σ=1.3pp → 高い安定性"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": -1.5, "confidence": 100, "reasons": ["Bull ¥3,064 / Base ¥1,057 / Bear ¥191", "現在株価 ¥3,208 → 0/9 シナリオで割安"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】理論株価 ¥1,057 vs 現在 ¥3,208（-67.0%）", "【三表財務】売上成長率 平均-8.6% → 減収傾向", "【類似企業比較】PER 13.0 → セクター中央値20.7対比 -36.9% 割安", "【オペレーティング】ROIC 2.1% → WACC 割れの可能性", "【感応度】Bull ¥3,064 / Base ¥1,057 / Bear ¥191"]}, {"ticker": "2501.T", "name": "サッポロホールディングス", "price": 2045.0, "category": "保有中", "signal": "適正", "score": -0.05, "confidence": 91, "fair_value": 2223.0, "upside_pct": 8.7, "agents": [{"agent": "DCF", "score": 0.5, "confidence": 70, "reasons": ["理論株価 ¥2,223 vs 現在 ¥2,045（+8.7%）", "WACC 8.0%, 永続成長率 1.5%"], "fair_value": 2223.0, "upside_pct": 8.7}, {"agent": "三表財務", "score": 0.8, "confidence": 100, "reasons": ["営業利益率 改善傾向", "自己資本比率 33.5% → 標準"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": -1.5, "confidence": 100, "reasons": ["PER 53.1 → セクター中央値19.7対比 +169.9% 割高", "PBR 3.71 → セクター中央値1.56対比 +137.9% 割高"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.1, "confidence": 100, "reasons": ["ROIC 4.1% → WACC 割れの可能性", "マージン安定性 σ=1.4pp → 高い安定性"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": 0.0, "confidence": 100, "reasons": ["Bull ¥4,503 / Base ¥2,223 / Bear ¥1,382", "現在株価 ¥2,045 → 5/9 シナリオで割安"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】理論株価 ¥2,223 vs 現在 ¥2,045（+8.7%）", "【三表財務】営業利益率 改善傾向", "【類似企業比較】PER 53.1 → セクター中央値19.7対比 +169.9% 割高", "【オペレーティング】ROIC 4.1% → WACC 割れの可能性", "【感応度】Bull ¥4,503 / Base ¥2,223 / Bear ¥1,382"]}, {"ticker": "3099.T", "name": "三越伊勢丹ホールディングス", "price": 3895.0, "category": "保有中", "signal": "大幅割安", "score": 1.07, "confidence": 94, "fair_value": 5757.0, "upside_pct": 47.8, "agents": [{"agent": "DCF", "score": 2.0, "confidence": 83, "reasons": ["理論株価 ¥5,757 vs 現在 ¥3,895（+47.8%）", "WACC 8.0%, 永続成長率 1.5%"], "fair_value": 5757.0, "upside_pct": 47.8}, {"agent": "三表財務", "score": 1.2, "confidence": 100, "reasons": ["売上成長率 平均+3.9%", "営業利益率 改善傾向"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": 0.0, "confidence": 100, "reasons": ["PER 18.2 → セクター中央値20.9対比 -13.1% やや割安", "PBR 2.21 → セクター中央値1.25対比 +77.1% 割高"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.2, "confidence": 100, "reasons": ["ROIC 10.4% → 平均的"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": 2.0, "confidence": 100, "reasons": ["Bull ¥10,647 / Base ¥5,757 / Bear ¥3,953", "現在株価 ¥3,895 → 9/9 シナリオで割安"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】理論株価 ¥5,757 vs 現在 ¥3,895（+47.8%）", "【三表財務】売上成長率 平均+3.9%", "【類似企業比較】PER 18.2 → セクター中央値20.9対比 -13.1% やや割安", "【オペレーティング】ROIC 10.4% → 平均的", "【感応度】Bull ¥10,647 / Base ¥5,757 / Bear ¥3,953"]}, {"ticker": "6971.T", "name": "京セラ", "price": 3556.0, "category": "保有中", "signal": "割高", "score": -0.67, "confidence": 91, "fair_value": 512.0, "upside_pct": -85.6, "agents": [{"agent": "DCF", "score": -2.0, "confidence": 70, "reasons": ["理論株価 ¥512 vs 現在 ¥3,556（-85.6%）", "WACC 9.0%, 永続成長率 1.5%"], "fair_value": 512.0, "upside_pct": -85.6}, {"agent": "三表財務", "score": 1.3, "confidence": 100, "reasons": ["自己資本比率 71.9% → 財務健全", "流動比率 2.86 → 高い安全性"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": -1.0, "confidence": 100, "reasons": ["PER 34.6 → セクター中央値24.8対比 +39.4% 割高"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.5, "confidence": 100, "reasons": ["ROIC 2.5% → WACC 割れの可能性", "営業レバレッジ 92.5x → 増収時の利益拡大効果大"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": -1.5, "confidence": 100, "reasons": ["Bull ¥755 / Base ¥512 / Bear ¥406", "現在株価 ¥3,556 → 0/9 シナリオで割安"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】理論株価 ¥512 vs 現在 ¥3,556（-85.6%）", "【三表財務】自己資本比率 71.9% → 財務健全", "【類似企業比較】PER 34.6 → セクター中央値24.8対比 +39.4% 割高", "【オペレーティング】ROIC 2.5% → WACC 割れの可能性", "【感応度】Bull ¥755 / Base ¥512 / Bear ¥406"]}, {"ticker": "9201.T", "name": "日本航空", "price": 2904.0, "category": "保有中", "signal": "大幅割安", "score": 1.27, "confidence": 94, "fair_value": 21633.0, "upside_pct": 644.9, "agents": [{"agent": "DCF", "score": 2.0, "confidence": 83, "reasons": ["理論株価 ¥21,633 vs 現在 ¥2,904（+644.9%）", "WACC 8.0%, 永続成長率 1.5%"], "fair_value": 21633.0, "upside_pct": 644.9}, {"agent": "三表財務", "score": 1.3, "confidence": 100, "reasons": ["売上成長率 平均+13.6% → 高成長", "営業利益率 改善傾向"], "fair_value": null, "upside_pct": null}, {"agent": "類似企業比較", "score": 0.5, "confidence": 100, "reasons": ["PER 9.5 → セクター中央値12.8対比 -26.3% やや割安"], "fair_value": null, "upside_pct": null}, {"agent": "オペレーティング", "score": 0.6, "confidence": 100, "reasons": ["ROIC 12.5% → 平均的", "営業レバレッジ 2.5x → 増収時の利益拡大効果大"], "fair_value": null, "upside_pct": null}, {"agent": "感応度", "score": 2.0, "confidence": 100, "reasons": ["Bull ¥39,244 / Base ¥21,633 / Bear ¥15,120", "現在株価 ¥2,904 → 9/9 シナリオで割安"], "fair_value": null, "upside_pct": null}], "reasons": ["【DCF】理論株価 ¥21,633 vs 現在 ¥2,904（+644.9%）", "【三表財務】売上成長率 平均+13.6% → 高成長", "【類似企業比較】PER 9.5 → セクター中央値12.8対比 -26.3% やや割安", "【オペレーティング】ROIC 12.5% → 平均的", "【感応度】Bull ¥39,244 / Base ¥21,633 / Bear ¥15,120"]}];
+const HEATMAP = [{"name": "三井住友トラ", "dcf": 2.0, "comps": 0.5, "three_stmt": 0.5, "operating": 0.0, "sensitivity": 2.0}, {"name": "三菱UFJフ", "dcf": 2.0, "comps": 0.0, "three_stmt": -0.4, "operating": 0.0, "sensitivity": 2.0}, {"name": "三井住友フィ", "dcf": 2.0, "comps": 0.0, "three_stmt": -0.4, "operating": 0.0, "sensitivity": 2.0}, {"name": "野村ホールデ", "dcf": -1.0, "comps": 0.5, "three_stmt": -0.8, "operating": 0.0, "sensitivity": -1.0}, {"name": "大和証券グル", "dcf": 0.0, "comps": 0.5, "three_stmt": 0.1, "operating": 0.0, "sensitivity": 0.0}, {"name": "NIPPON", "dcf": 0.0, "comps": -1.5, "three_stmt": 0.1, "operating": 0.1, "sensitivity": 0.0}, {"name": "メルカリ", "dcf": -1.0, "comps": -1.0, "three_stmt": -0.9, "operating": 0.7, "sensitivity": -1.0}, {"name": "協和キリン", "dcf": -2.0, "comps": 0.0, "three_stmt": 1.6, "operating": 0.9, "sensitivity": -1.5}, {"name": "第一生命ホー", "dcf": 2.0, "comps": 0.0, "three_stmt": 0.5, "operating": 0.5, "sensitivity": 1.5}, {"name": "日本郵政", "dcf": 2.0, "comps": 1.0, "three_stmt": 0.1, "operating": 0.0, "sensitivity": 2.0}, {"name": "UBE", "dcf": -2.0, "comps": 2.0, "three_stmt": -0.6, "operating": 0.1, "sensitivity": -1.5}, {"name": "サッポロホー", "dcf": 0.5, "comps": -1.5, "three_stmt": 0.8, "operating": 0.1, "sensitivity": 0.0}, {"name": "三越伊勢丹ホ", "dcf": 2.0, "comps": 0.0, "three_stmt": 1.2, "operating": 0.2, "sensitivity": 2.0}, {"name": "京セラ", "dcf": -2.0, "comps": -1.0, "three_stmt": 1.3, "operating": 0.5, "sensitivity": -1.5}, {"name": "日本航空", "dcf": 2.0, "comps": 0.5, "three_stmt": 1.3, "operating": 0.6, "sensitivity": 2.0}];
+
+// --- Table sort ---
+let sortCol = -1, sortAsc = true;
+document.querySelectorAll('#analysisTable th').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = parseInt(th.dataset.col);
+    if (sortCol === col) sortAsc = !sortAsc;
+    else { sortCol = col; sortAsc = true; }
+    const tbody = document.querySelector('#analysisTable tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+      let av = a.cells[col].textContent.trim();
+      let bv = b.cells[col].textContent.trim();
+      const an = parseFloat(av.replace(/[¥,%]/g, '').replace(/,/g, ''));
+      const bn = parseFloat(bv.replace(/[¥,%]/g, '').replace(/,/g, ''));
+      if (!isNaN(an) && !isNaN(bn)) return sortAsc ? an - bn : bn - an;
+      return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
+    rows.forEach(r => tbody.appendChild(r));
+  });
+});
+
+// --- Radar chart ---
+let radarChart = null;
+function updateRadar(idx) {
+  const s = SIGNALS[idx];
+  if (!s || !s.agents) return;
+  const labels = s.agents.map(a => a.agent);
+  const data = s.agents.map(a => a.score);
+
+  if (radarChart) radarChart.destroy();
+  radarChart = new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: s.name,
+        data: data,
+        borderColor: '#64B5F6',
+        backgroundColor: 'rgba(100,181,246,0.15)',
+        borderWidth: 2,
+        pointBackgroundColor: '#64B5F6',
+      }]
+    },
+    options: {
+      scales: {
+        r: {
+          min: -2, max: 2,
+          ticks: { stepSize: 1, color: '#757575', backdropColor: 'transparent' },
+          grid: { color: '#333' },
+          pointLabels: { color: '#E0E0E0', font: { size: 10 } },
+          angleLines: { color: '#333' },
+        }
+      },
+      plugins: { legend: { display: false } },
+    }
+  });
+}
+
+// --- Heatmap ---
+function buildHeatmap() {
+  const container = document.getElementById('heatmapContainer');
+  if (!HEATMAP.length) { container.innerHTML = '<p style="color:#757575">データなし</p>'; return; }
+
+  const dims = ['dcf', 'comps', 'three_stmt', 'operating', 'sensitivity'];
+  const dimLabels = ['DCF', 'Comps', '三表', 'OP', '感応度'];
+
+  let html = '<div class="heatmap-header">';
+  dimLabels.forEach(l => html += `<span>${l}</span>`);
+  html += '</div><div class="heatmap">';
+
+  HEATMAP.forEach(item => {
+    html += `<div class="heatmap-row"><div class="heatmap-label">${item.name}</div>`;
+    dims.forEach(d => {
+      const v = item[d] || 0;
+      const color = scoreColor(v);
+      html += `<div class="heatmap-cell" style="background:${color}">${v.toFixed(1)}</div>`;
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function scoreColor(v) {
+  if (v >= 1.0) return 'rgba(0,200,83,' + Math.min(0.9, 0.3 + v * 0.25) + ')';
+  if (v >= 0) return 'rgba(117,117,117,' + (0.2 + v * 0.3) + ')';
+  return 'rgba(255,23,68,' + Math.min(0.9, 0.2 + Math.abs(v) * 0.3) + ')';
+}
+
+// --- Row select & Detail ---
+let selectedIdx = -1;
+function selectRow(idx) {
+  document.querySelectorAll('.data-row').forEach(r => r.classList.remove('selected'));
+  const row = document.querySelector(`.data-row[data-idx="${idx}"]`);
+  if (row) row.classList.add('selected');
+  selectedIdx = idx;
+  updateRadar(idx);
+  showDetail(idx);
+}
+
+function showDetail(idx) {
+  const panel = document.getElementById('detailPanel');
+  const sig = SIGNALS[idx];
+  if (!sig) return;
+
+  panel.classList.add('active');
+  document.getElementById('detailTitle').textContent = `${sig.name} (${sig.ticker})`;
+  const badge = document.getElementById('detailBadge');
+  badge.textContent = sig.signal;
+  const sigLower = (sig.signal_raw || sig.signal || '').toLowerCase().replace(/ /g, '_');
+  badge.className = 'signal-badge ' + (['strong_buy','buy','hold','sell','strong_sell'].includes(sigLower) ? sigLower : '');
+
+  const fv = sig.fair_value;
+  const up = sig.upside_pct;
+  let summaryHtml = `<p style="margin-bottom:8px">`;
+  summaryHtml += `Score: <strong>${(sig.score >= 0 ? '+' : '') + sig.score.toFixed(2)}</strong>`;
+  summaryHtml += ` &nbsp; Confidence: <strong>${sig.confidence}%</strong>`;
+  if (fv && fv > 0) summaryHtml += ` &nbsp; 理論株価: <strong>&yen;${fv.toLocaleString()}</strong>`;
+  if (up != null) summaryHtml += ` &nbsp; 乖離率: <strong style="color:${up >= 0 ? '#00C853' : '#FF1744'}">${up >= 0 ? '+' : ''}${up.toFixed(1)}%</strong>`;
+  summaryHtml += `</p>`;
+
+  // Agent cards
+  let cardsHtml = '<div class="agent-cards">';
+  (sig.agents || []).forEach(a => {
+    const sc = a.score || 0;
+    const borderColor = sc >= 1.0 ? '#00C853' : (sc >= 0 ? '#FF9800' : '#FF1744');
+    const reasons = (a.reasons || []).slice(0, 2).map(r => `<div class="a-reason">${r}</div>`).join('');
+    const fvAgent = a.fair_value;
+    const fvLine = fvAgent && fvAgent > 0 ? `<div class="a-reason" style="color:#64B5F6;margin-top:4px">理論株価: &yen;${fvAgent.toLocaleString()}</div>` : '';
+    cardsHtml += `<div class="agent-card" style="border-left-color:${borderColor}">
+      <div class="a-name">${a.agent}</div>
+      <div class="a-score" style="color:${borderColor}">${sc >= 0 ? '+' : ''}${sc.toFixed(2)}</div>
+      ${reasons}${fvLine}
+    </div>`;
+  });
+  cardsHtml += '</div>';
+
+  // Reasons summary
+  let reasonsHtml = '';
+  if (sig.reasons && sig.reasons.length) {
+    reasonsHtml = '<ul class="reasons-list">';
+    sig.reasons.forEach(r => reasonsHtml += `<li>${r}</li>`);
+    reasonsHtml += '</ul>';
+  }
+
+  document.getElementById('detailContent').innerHTML = summaryHtml + cardsHtml + reasonsHtml;
+}
+
+// Init
+buildHeatmap();
+if (SIGNALS.length > 0) selectRow(0);
+</script>
+</body>
+</html>
