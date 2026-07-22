@@ -65,7 +65,7 @@ a.stock-link:hover { text-decoration:underline; }
 </head>
 <body>
 <h1>Paper Trade Dashboard</h1>
-<div class="updated">最終更新: 2026-07-22 16:43 JST &nbsp;|&nbsp; <a href="history.html" style="color:#64B5F6;text-decoration:none">実行履歴 &rarr;</a> &nbsp;|&nbsp; <a href="weekly-review.html" style="color:#64B5F6;text-decoration:none">週次レビュー &rarr;</a> &nbsp;|&nbsp; <a href="analysis.html" style="color:#64B5F6;text-decoration:none">AI分析 &rarr;</a></div>
+<div class="updated">最終更新: 2026-07-23 08:47 JST &nbsp;|&nbsp; <a href="history.html" style="color:#64B5F6;text-decoration:none">実行履歴 &rarr;</a> &nbsp;|&nbsp; <a href="weekly-review.html" style="color:#64B5F6;text-decoration:none">週次レビュー &rarr;</a> &nbsp;|&nbsp; <a href="analysis.html" style="color:#64B5F6;text-decoration:none">AI分析 &rarr;</a></div>
 
 <div class="hero-card">
   <div class="label">総資産</div>
@@ -188,35 +188,35 @@ a.stock-link:hover { text-decoration:underline; }
 <td class="num">52.7</td>
 <td class="num">0.68</td>
 <td class="num"><span style="color:#FF1744;font-weight:600">TV:SELL</span></td>
-<td class="num">1</td>
+<td class="num">5</td>
 </tr><tr>
 <td>リクルートホールディングス<br><span class="ticker">6098</span></td>
 <td class="num">&yen;12,305</td>
 <td class="num">59.1</td>
 <td class="num">0.67</td>
 <td class="num"><span style="color:#FFC107;font-weight:600">TV:NEUTRAL</span></td>
-<td class="num">-</td>
+<td class="num">1</td>
 </tr><tr>
 <td>みずほフィナンシャルグループ<br><span class="ticker">8411</span></td>
 <td class="num">&yen;8,529</td>
 <td class="num">60.7</td>
 <td class="num">0.66</td>
 <td class="num"><span style="color:#FFC107;font-weight:600">TV:NEUTRAL</span></td>
-<td class="num">-</td>
+<td class="num">2</td>
 </tr><tr>
 <td>電通グループ<br><span class="ticker">4324</span></td>
 <td class="num">&yen;3,366</td>
 <td class="num">57.5</td>
 <td class="num">0.65</td>
 <td class="num"><span style="color:#FFC107;font-weight:600">TV:NEUTRAL</span></td>
-<td class="num">1</td>
+<td class="num">7</td>
 </tr><tr>
 <td>サッポロホールディングス<br><span class="ticker">2501</span></td>
 <td class="num">&yen;2,018</td>
 <td class="num">60.0</td>
 <td class="num">0.62</td>
 <td class="num"><span style="color:#FFC107;font-weight:600">TV:NEUTRAL</span></td>
-<td class="num">3</td>
+<td class="num">11</td>
 </tr></tbody>
   </table>
   </div>
@@ -695,7 +695,7 @@ if (sigAcc.some(b => b.count > 0)) {
 }
 
 // RSI Analysis Chart
-const rsiAna = [{"range": "50-55", "count": 0, "wins": 0, "win_rate": 0, "avg_pnl_pct": 0}, {"range": "55-60", "count": 4, "wins": 1, "win_rate": 25.0, "avg_pnl_pct": -0.8}, {"range": "60-65", "count": 5, "wins": 3, "win_rate": 60.0, "avg_pnl_pct": 4.88}];
+const rsiAna = [{"range": "50-55", "count": 0, "wins": 0, "win_rate": 0, "avg_pnl_pct": 0}, {"range": "55-60", "count": 4, "wins": 1, "win_rate": 25.0, "avg_pnl_pct": -0.8}, {"range": "60-65", "count": 2, "wins": 0, "win_rate": 0.0, "avg_pnl_pct": -6.08}];
 if (rsiAna.some(b => b.count > 0)) {
   new Chart(document.getElementById('rsiChart'), {
     type: 'bar',
